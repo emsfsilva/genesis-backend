@@ -1,8 +1,5 @@
-import { ReturnAlunoDTO } from 'src/aluno/dtos/return-aluno.dto';
 import { ReturnAddressDto } from '../../address/dtos/returnAddress.dto';
 import { UserType } from '../enum/user-type.enum';
-import { ReturnAdmDTO } from 'src/adm/dtos/return-adm.dto';
-import { ReturnCaDTO } from 'src/ca/dtos/return-ca.dto';
 import { ReturnMasterDTO } from 'src/master/dtos/return-master.dto';
 
 export class ReturnUserDto {
@@ -18,12 +15,9 @@ export class ReturnUserDto {
   funcao: string;
   typeUser: UserType;
   addresses?: ReturnAddressDto[];
-  aluno?: ReturnAlunoDTO;
-  adm?: ReturnAdmDTO;
-  ca?: ReturnCaDTO;
   master?: ReturnMasterDTO;
 
-  constructor(userEntity: any, grauAtual?: number) {
+  constructor(userEntity: any) {
     this.id = userEntity.id;
     this.name = userEntity.name;
     this.email = userEntity.email;
@@ -39,14 +33,6 @@ export class ReturnUserDto {
     this.addresses = userEntity.addresses
       ? userEntity.addresses.map((address) => new ReturnAddressDto(address))
       : undefined;
-
-    this.aluno = userEntity.aluno
-      ? new ReturnAlunoDTO(userEntity.aluno, grauAtual)
-      : undefined;
-
-    this.adm = userEntity.adm ? new ReturnAdmDTO(userEntity.adm) : undefined;
-
-    this.ca = userEntity.ca ? new ReturnCaDTO(userEntity.ca) : undefined;
 
     this.master = userEntity.master
       ? new ReturnMasterDTO(userEntity.master)

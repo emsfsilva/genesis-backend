@@ -16,7 +16,6 @@ import { UpdatePasswordDTO } from './dtos/update-password.dto';
 import { UserService } from './user.service';
 import { Roles } from 'src/decorators/roles.decorator';
 import { UserType } from './enum/user-type.enum';
-import { ReturnAlunoDTO } from 'src/aluno/dtos/return-aluno.dto';
 
 @Controller('user')
 /*@Roles(
@@ -44,22 +43,6 @@ export class UserController {
   async getAllUser(): Promise<ReturnUserDto[]> {
     const users = await this.userService.getAllUser();
     return users.map((userEntity) => new ReturnUserDto(userEntity)); // Transforma todos em ReturnUserDto
-  }
-
-  @Get('/:userId')
-  async getUserById(@Param('userId') userId: number): Promise<ReturnUserDto> {
-    const user = await this.userService.getUserByIdUsingRelations(userId);
-
-    let alunoDTO;
-    if (user?.typeUser === 1 && user.aluno) {
-      const grauAtual = (user.aluno as any).grauAtual;
-      alunoDTO = new ReturnAlunoDTO(user.aluno, grauAtual);
-    }
-
-    return new ReturnUserDto({
-      ...user,
-      aluno: alunoDTO,
-    });
   }
 
   @Patch('/:userId')
