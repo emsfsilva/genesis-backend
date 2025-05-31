@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
+
 import { UserModule } from './user/user.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { StateModule } from './state/state.module';
 import { CityModule } from './city/city.module';
@@ -25,18 +26,24 @@ import { MasterModule } from './master/master.module';
   imports: [
     ConfigModule.forRoot({
       envFilePath: ['.env.development.local'],
+      isGlobal: true,
     }),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      database: process.env.DB_DATABASE,
-      host: process.env.DB_HOST,
-      password: process.env.DB_PASSWORD,
-      port: Number(process.env.DB_PORT),
-      username: process.env.DB_USERNAME,
-      entities: [`${__dirname}/**/*.entity{.js,.ts}`],
-      migrations: [`${__dirname}/migration/{.ts,*.js}`],
-      migrationsRun: true,
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.get<string>('DB_HOST'),
+        port: configService.get<number>('DB_PORT'),
+        username: configService.get<string>('DB_USERNAME'),
+        password: configService.get<string>('DB_PASSWORD'),
+        database: configService.get<string>('DB_DATABASE'),
+        entities: [`${__dirname}/**/*.entity{.ts,.js}`],
+        synchronize: false, // ou true, dependendo do seu caso
+        migrationsRun: true,
+      }),
     }),
+    // outros módulos
     UserModule,
     StateModule,
     CityModule,
@@ -63,4 +70,8 @@ import { MasterModule } from './master/master.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule {
+  constructor() {
+    console.log('ENV DB_HOST:', process.env.DB_HOST); // Tente aqui ou em main.ts
+  }
+}
