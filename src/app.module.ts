@@ -11,6 +11,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './guards/roles.guard';
 import { JwtModule } from '@nestjs/jwt';
 import { MasterModule } from './master/master.module';
+import { PjesEventoModule } from './pjesevento/pjesevento.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { MasterModule } from './master/master.module';
     AuthModule,
     JwtModule,
     MasterModule,
+    PjesEventoModule,
   ],
   controllers: [],
   providers: [

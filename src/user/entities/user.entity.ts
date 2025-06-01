@@ -16,23 +16,11 @@ export class UserEntity {
   @PrimaryGeneratedColumn('rowid')
   id: number;
 
-  @Column({ name: 'name', nullable: false })
-  name: string;
-
   @Column({ name: 'email', nullable: false })
   email: string;
 
-  @Column({ name: 'phone' })
-  phone: string;
-
-  @Column({ name: 'cpf', nullable: false })
-  cpf: string;
-
   @Column({ name: 'password', nullable: false })
   password: string;
-
-  @Column({ name: 'orgao', nullable: false })
-  orgao: string;
 
   @Column({ name: 'pg', nullable: false })
   pg: string;
@@ -42,6 +30,12 @@ export class UserEntity {
 
   @Column({ name: 'ng', nullable: false })
   nomeGuerra: string;
+
+  @Column({ name: 'ome', nullable: false })
+  ome: string;
+
+  @Column({ name: 'phone' })
+  phone: string;
 
   @Column({ name: 'funcao', nullable: false })
   funcao: string;
