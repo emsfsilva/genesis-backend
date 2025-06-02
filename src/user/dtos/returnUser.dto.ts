@@ -1,14 +1,13 @@
+import { ReturnOmeDto } from 'src/ome/dtos/returnOme.dto';
 import { ReturnAddressDto } from '../../address/dtos/returnAddress.dto';
 import { UserType } from '../enum/user-type.enum';
 import { ReturnMasterDTO } from 'src/master/dtos/return-master.dto';
 
 export class ReturnUserDto {
   id: number;
-  name: string;
   email: string;
   phone: string;
-  cpf: string;
-  orgao: string;
+  omeId: number;
   pg: string;
   mat: number;
   nomeGuerra: string;
@@ -16,14 +15,13 @@ export class ReturnUserDto {
   typeUser: UserType;
   addresses?: ReturnAddressDto[];
   master?: ReturnMasterDTO;
+  ome?: ReturnOmeDto;
 
   constructor(userEntity: any) {
     this.id = userEntity.id;
-    this.name = userEntity.name;
     this.email = userEntity.email;
     this.phone = userEntity.phone;
-    this.cpf = userEntity.cpf;
-    this.orgao = userEntity.orgao;
+    this.omeId = userEntity.omeId;
     this.pg = userEntity.pg;
     this.mat = userEntity.mat;
     this.nomeGuerra = userEntity.nomeGuerra;
@@ -37,5 +35,7 @@ export class ReturnUserDto {
     this.master = userEntity.master
       ? new ReturnMasterDTO(userEntity.master)
       : undefined;
+
+    this.ome = userEntity.ome ? new ReturnOmeDto(userEntity.ome) : undefined;
   }
 }

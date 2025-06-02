@@ -3,19 +3,10 @@ import { UserType } from '../enum/user-type.enum';
 
 export class CreateUserDto {
   @IsString()
-  name: string;
-
-  @IsString()
   email: string;
 
   @IsString()
-  phone: string;
-
-  @IsString()
-  cpf: string;
-
-  @IsString()
-  orgao: string;
+  password: string;
 
   @IsString()
   pg: string;
@@ -26,11 +17,14 @@ export class CreateUserDto {
   @IsString()
   nomeGuerra: string;
 
-  @IsString()
-  funcao: string;
+  @IsNumber()
+  omeId: number;
 
   @IsString()
-  password: string;
+  phone: string;
+
+  @IsString()
+  funcao: string;
 
   @IsEnum(UserType)
   typeUser: UserType;

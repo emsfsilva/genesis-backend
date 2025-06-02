@@ -3,6 +3,8 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -10,6 +12,7 @@ import {
 } from 'typeorm';
 import { UserType } from '../enum/user-type.enum';
 import { MasterEntity } from 'src/master/entities/master.entity';
+import { OmeEntity } from 'src/ome/entities/ome.entity';
 
 @Entity({ name: 'user' })
 export class UserEntity {
@@ -31,8 +34,8 @@ export class UserEntity {
   @Column({ name: 'ng', nullable: false })
   nomeGuerra: string;
 
-  @Column({ name: 'ome', nullable: false })
-  ome: string;
+  @Column({ name: 'omeid', nullable: false })
+  omeId: number;
 
   @Column({ name: 'phone' })
   phone: string;
@@ -61,4 +64,8 @@ export class UserEntity {
 
   @OneToOne(() => MasterEntity, (master) => master.user)
   master?: MasterEntity;
+
+  @ManyToOne(() => OmeEntity, (ome) => ome.users, { eager: true })
+  @JoinColumn({ name: 'omeid' })
+  ome?: OmeEntity;
 }

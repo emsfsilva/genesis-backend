@@ -16,6 +16,10 @@ export class createTablePjesEvento1675770516769 implements MigrationInterface {
         created_at TIMESTAMP DEFAULT now(),
         updated_at TIMESTAMP DEFAULT now()
       );
+
+      ALTER TABLE public.pjesevento
+        ADD CONSTRAINT fk_pjesevento_ome FOREIGN KEY (omeid) REFERENCES public.ome(id),
+        ADD CONSTRAINT fk_pjesevento_user FOREIGN KEY (userid) REFERENCES public.user(id);
     `);
   }
 
