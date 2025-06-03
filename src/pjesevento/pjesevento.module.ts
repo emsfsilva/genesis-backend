@@ -8,6 +8,6 @@ import { PjesEventoEntity } from './entities/pjesevento.entity';
   imports: [TypeOrmModule.forFeature([PjesEventoEntity])],
   providers: [PjesEventoService],
   controllers: [PjesEventoController],
-  exports: [TypeOrmModule],
+  exports: [TypeOrmModule, PjesEventoService],
 })
 export class PjesEventoModule {}

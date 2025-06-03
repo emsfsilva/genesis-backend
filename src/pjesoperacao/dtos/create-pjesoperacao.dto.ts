@@ -1,24 +1,33 @@
 import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
-export class CreatePjesEventoDto {
+export class CreatePjesOperacaoDto {
   @IsString()
   @IsNotEmpty()
-  nomeEvento: string;
+  nomeOperacao: string;
 
   @IsNumber()
   omeId: number;
 
   @IsNumber()
-  ttCtOf: number;
+  pjesEventoId: number;
 
   @IsNumber()
-  ttCtPrc: number;
+  ttCtOfDist: number;
+
+  @IsNumber()
+  ttCtPrcDist: number;
+
+  @IsNumber()
+  ttCtOfExe: number;
+
+  @IsNumber()
+  ttCtPrcExe: number;
 
   @IsNumber()
   UserId: number;
 
   @IsString()
-  statusEvento: string;
+  statusOperacao: string;
 
   @IsNumber()
   mes: number;

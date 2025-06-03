@@ -14,6 +14,7 @@ import { MasterModule } from './master/master.module';
 import { PjesEventoModule } from './pjesevento/pjesevento.module';
 import { OmeModule } from './ome/ome.module';
 import { DiretoriaModule } from './diretoria/diretoria.module';
+import { PjesOperacaoModule } from './pjesoperacao/pjesoperacao.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { DiretoriaModule } from './diretoria/diretoria.module';
     PjesEventoModule,
     OmeModule,
     DiretoriaModule,
+    PjesOperacaoModule,
   ],
   controllers: [],
   providers: [

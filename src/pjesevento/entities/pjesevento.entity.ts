@@ -1,7 +1,9 @@
+import { PjesOperacaoEntity } from 'src/pjesoperacao/entities/pjesoperacao.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -12,22 +14,22 @@ export class PjesEventoEntity {
   id: number;
 
   @Column({ name: 'nomedoevento', nullable: false })
-  nomedoevento: string;
+  nomeEvento: string;
 
   @Column({ name: 'omeid', nullable: false })
-  OmeId: number;
+  omeId: number;
 
   @Column({ name: 'ttctof', nullable: false })
-  ttctof: number;
+  ttCtOf: number;
 
   @Column({ name: 'ttctprc', nullable: false })
-  ttctprc: number;
+  ttCtPrc: number;
 
   @Column({ name: 'userid', nullable: false })
   UserId: number;
 
   @Column({ name: 'statusevento', nullable: false })
-  statusevento: string;
+  statusEvento: string;
 
   @Column({ name: 'mes', nullable: false })
   mes: number;
@@ -40,4 +42,10 @@ export class PjesEventoEntity {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
+
+  @OneToMany(
+    () => PjesOperacaoEntity,
+    (pjesoperacao) => pjesoperacao.pjesevento,
+  )
+  pjesoperacoes?: PjesOperacaoEntity[];
 }

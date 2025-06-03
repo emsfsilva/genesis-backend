@@ -1,11 +1,11 @@
 export class ReturnPjesEventoDto {
   id: number;
-  nomedoevento: string;
-  OmeId: number;
-  ttctof: number;
-  ttctprc: number;
+  nomeEvento: string;
+  omeId: number;
+  ttCtOf: number;
+  ttCtPrc: number;
   UserId: number;
-  statusevento: string;
+  statusEvento: string;
   mes: number;
   ano: number;
   createdAt: Date;
