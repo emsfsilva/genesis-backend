@@ -4,7 +4,7 @@ export class ReturnPjesEventoDto {
   omeId: number;
   ttCtOf: number;
   ttCtPrc: number;
-  UserId: number;
+  userId: number;
   statusEvento: string;
   mes: number;
   ano: number;

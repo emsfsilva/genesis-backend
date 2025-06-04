@@ -15,7 +15,7 @@ export class CreatePjesEventoDto {
   ttCtPrc: number;
 
   @IsNumber()
-  UserId: number;
+  userId: number;
 
   @IsString()
   statusEvento: string;

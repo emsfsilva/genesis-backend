@@ -9,8 +9,8 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 import { PjesOperacaoService } from './pjesoperacao.service';
-import { CreatePjesOperacaoDto } from './dtos/create-pjesoperacao.dto';
 import { ReturnPjesOperacaoDto } from './dtos/return-pjesoperacao.dto';
+import { CreatePjesOperacaoDto } from './dtos/create-pjesoperacao.dto';
 
 @Controller('pjesoperacao')
 export class PjesOperacaoController {

@@ -36,7 +36,7 @@ export class PjesOperacaoEntity {
   ttCtPrcExe: number;
 
   @Column({ name: 'userid', nullable: false })
-  UserId: number;
+  userId: number;
 
   @Column({ name: 'statusevento', nullable: false })
   statusOperacao: string;

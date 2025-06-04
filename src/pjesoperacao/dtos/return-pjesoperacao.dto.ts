@@ -9,7 +9,7 @@ export class ReturnPjesOperacaoDto {
   ttCtPrcDist: number;
   ttCtOfExe: number;
   ttCtPrcExe: number;
-  UserId: number;
+  userId: number;
   statusOperacao: string;
   mes: number;
   ano: number;
@@ -29,7 +29,7 @@ export class ReturnPjesOperacaoDto {
     this.ttCtPrcDist = pjesOperacaoEntity.ttCtPrcDist;
     this.ttCtOfExe = pjesOperacaoEntity.ttCtOfExe;
     this.ttCtPrcExe = pjesOperacaoEntity.ttCtPrcExe;
-    this.UserId = pjesOperacaoEntity.UserId;
+    this.userId = pjesOperacaoEntity.userId;
     this.statusOperacao = pjesOperacaoEntity.statusOperacao;
     this.mes = pjesOperacaoEntity.mes;
     this.ano = pjesOperacaoEntity.ano;

@@ -11,7 +11,11 @@ export class insertInDiretoria1675388649811 implements MigrationInterface {
         ('DINTER I'),
         ('DINTER II'),
         ('QCG'),
-        ('OE');
+        ('OE'),
+        ('DASDH'),
+        ('MPPE'),
+        ('TJPE'),
+        ('CAMIL');
     `);
   }
 
@@ -20,7 +24,7 @@ export class insertInDiretoria1675388649811 implements MigrationInterface {
       DELETE FROM public."diretoria"
       WHERE nomediretoria IN (
         'DPO', 'DIM', 'DIRESP', 'DINTER I', 'DINTER II',
-        'QCG', 'OE'
+        'QCG', 'OE', 'DASDH', 'MPPE', 'TJPE', 'CAMIL'
       );
     `);
   }

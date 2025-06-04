@@ -5,7 +5,7 @@ export class createTablePjesEvento1675770516769 implements MigrationInterface {
     await queryRunner.query(`
       CREATE TABLE public.pjesevento (
         id SERIAL PRIMARY KEY,
-        nomedoevento VARCHAR NOT NULL,
+        nomeevento VARCHAR NOT NULL,
         omeid INTEGER NOT NULL,
         ttctof INTEGER NOT NULL,
         ttctprc INTEGER NOT NULL,

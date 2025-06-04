@@ -13,7 +13,7 @@ export class PjesEventoEntity {
   @PrimaryGeneratedColumn('rowid')
   id: number;
 
-  @Column({ name: 'nomedoevento', nullable: false })
+  @Column({ name: 'nomeevento', nullable: false })
   nomeEvento: string;
 
   @Column({ name: 'omeid', nullable: false })
@@ -26,7 +26,7 @@ export class PjesEventoEntity {
   ttCtPrc: number;
 
   @Column({ name: 'userid', nullable: false })
-  UserId: number;
+  userId: number;
 
   @Column({ name: 'statusevento', nullable: false })
   statusEvento: string;
