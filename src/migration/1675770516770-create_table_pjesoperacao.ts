@@ -12,25 +12,32 @@ export class createTablePjesOperacao1675770516770
         pjeseventoid INTEGER NOT NULL,
         omeid INTEGER NOT NULL,
 
-        ttctofdist INTEGER NOT NULL,
-        ttctprcdist INTEGER NOT NULL,
-        ttctofexe INTEGER NOT NULL,
-        ttctprcexe INTEGER NOT NULL,
+        ttctofoper INTEGER NOT NULL,
+        ttctprcoper INTEGER NOT NULL,
 
         userid INTEGER NOT NULL,
-        statusevento VARCHAR NOT NULL,
+        statusoperacao VARCHAR NOT NULL,
         mes INTEGER NOT NULL,
         ano INTEGER NOT NULL,
 
         created_at TIMESTAMP DEFAULT now(),
-        updated_at TIMESTAMP DEFAULT now()
-      );
+        updated_at TIMESTAMP DEFAULT now(),
 
-      ALTER TABLE public.pjesoperacao
-      ADD CONSTRAINT fk_pjesoperacao_pjeseventoid
-      FOREIGN KEY (pjeseventoid)
-      REFERENCES public.pjesevento(id)
-      ON DELETE CASCADE;
+        CONSTRAINT fk_pjesoperacao_pjeseventoid FOREIGN KEY (pjeseventoid)
+          REFERENCES public.pjesevento(id)
+          ON DELETE CASCADE
+          ON UPDATE CASCADE,
+
+        CONSTRAINT fk_pjesoperacao_omeid FOREIGN KEY (omeid)
+          REFERENCES public.ome(id)
+          ON DELETE CASCADE
+          ON UPDATE CASCADE,
+
+        CONSTRAINT fk_pjesoperacao_userid FOREIGN KEY (userid)
+          REFERENCES public."user"(id)
+          ON DELETE CASCADE
+          ON UPDATE CASCADE
+      );
     `);
   }
 

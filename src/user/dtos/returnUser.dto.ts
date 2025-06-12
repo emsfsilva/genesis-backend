@@ -11,6 +11,7 @@ export class ReturnUserDto {
   pg: string;
   mat: number;
   nomeGuerra: string;
+  tipo: string;
   funcao: string;
   typeUser: UserType;
   addresses?: ReturnAddressDto[];
@@ -25,6 +26,7 @@ export class ReturnUserDto {
     this.pg = userEntity.pg;
     this.mat = userEntity.mat;
     this.nomeGuerra = userEntity.nomeGuerra;
+    this.tipo = userEntity.tipo;
     this.funcao = userEntity.funcao;
     this.typeUser = userEntity.typeUser;
 

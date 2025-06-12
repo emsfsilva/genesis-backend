@@ -1,4 +1,5 @@
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { StatusOperacaoEnum } from 'src/utils/status-operacao.enum';
 
 export class CreatePjesOperacaoDto {
   @IsString()
@@ -12,22 +13,16 @@ export class CreatePjesOperacaoDto {
   pjesEventoId: number;
 
   @IsNumber()
-  ttCtOfDist: number;
+  ttCtOfOper: number;
 
   @IsNumber()
-  ttCtPrcDist: number;
+  ttCtPrcOper: number;
 
   @IsNumber()
-  ttCtOfExe: number;
+  userId: number;
 
-  @IsNumber()
-  ttCtPrcExe: number;
-
-  @IsNumber()
-  UserId: number;
-
-  @IsString()
-  statusOperacao: string;
+  @IsEnum(StatusOperacaoEnum)
+  statusOperacao: StatusOperacaoEnum;
 
   @IsNumber()
   mes: number;

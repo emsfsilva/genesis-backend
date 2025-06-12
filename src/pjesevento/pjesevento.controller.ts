@@ -6,42 +6,53 @@ import {
   Param,
   Delete,
   Put,
+  ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { PjesEventoService } from './pjesevento.service';
 import { ReturnPjesEventoDto } from './dtos/return-pjesevento.dto';
 import { CreatePjesEventoDto } from './dtos/create-pjesevento.dto';
+import { User } from 'src/decorators/user.decorator';
+import { LoginPayload } from 'src/auth/dtos/loginPayload.dto';
+import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('pjesevento')
 export class PjesEventoController {
   constructor(private readonly pjeseventoService: PjesEventoService) {}
 
   @Post()
-  create(
-    @Body() createPjesEventoDto: CreatePjesEventoDto,
+  async create(
+    @Body() dto: CreatePjesEventoDto,
+    @User() user: LoginPayload,
   ): Promise<ReturnPjesEventoDto> {
-    return this.pjeseventoService.create(createPjesEventoDto);
+    return this.pjeseventoService.create(dto, user);
   }
 
   @Get()
-  findAll(): Promise<ReturnPjesEventoDto[]> {
+  async findAll(): Promise<ReturnPjesEventoDto[]> {
     return this.pjeseventoService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: number): Promise<ReturnPjesEventoDto> {
+  async findOne(@Param('id') id: number): Promise<ReturnPjesEventoDto> {
     return this.pjeseventoService.findOne(id);
   }
 
   @Put(':id')
-  update(
+  async update(
     @Param('id') id: number,
     @Body() updatePjesEventoDto: CreatePjesEventoDto,
+    @User() user: LoginPayload,
   ): Promise<ReturnPjesEventoDto> {
-    return this.pjeseventoService.update(id, updatePjesEventoDto);
+    return this.pjeseventoService.update(id, updatePjesEventoDto, user);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: number): Promise<void> {
-    return this.pjeseventoService.remove(id);
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @User() user: LoginPayload,
+  ): Promise<void> {
+    return this.pjeseventoService.remove(id, user);
   }
 }

@@ -17,6 +17,9 @@ import { DiretoriaModule } from './diretoria/diretoria.module';
 import { PjesOperacaoModule } from './pjesoperacao/pjesoperacao.module';
 import { PjesescalaModule } from './pjesescala/pjesescala.module';
 import { PjestetoModule } from './pjesteto/pjesteto.module';
+import { AuxiliarModule } from './auxiliar/auxiliar.module';
+import { DpoModule } from './dpo/dpo.module';
+import { PjesDistModule } from './pjesdist/pjesdist.module';
 
 @Module({
   imports: [
@@ -48,6 +51,9 @@ import { PjestetoModule } from './pjesteto/pjesteto.module';
     PjesOperacaoModule,
     PjesescalaModule,
     PjestetoModule,
+    AuxiliarModule,
+    DpoModule,
+    PjesDistModule,
   ],
   controllers: [],
   providers: [

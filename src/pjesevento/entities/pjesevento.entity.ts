@@ -1,8 +1,13 @@
+import { PjesDistEntity } from 'src/pjesdist/entities/pjesdist.entity';
+import { PjesEscalaEntity } from 'src/pjesescala/entities/pjesescala.entity';
 import { PjesOperacaoEntity } from 'src/pjesoperacao/entities/pjesoperacao.entity';
+import { StatusEventoEnum } from 'src/utils/status-evento.enum';
 import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -16,20 +21,28 @@ export class PjesEventoEntity {
   @Column({ name: 'nomeevento', nullable: false })
   nomeEvento: string;
 
+  @Column({ name: 'pjesdistid', nullable: false })
+  pjesDistId: number;
+
   @Column({ name: 'omeid', nullable: false })
   omeId: number;
 
-  @Column({ name: 'ttctof', nullable: false })
-  ttCtOf: number;
+  @Column({ name: 'ttctofevento', nullable: false })
+  ttCtOfEvento: number;
 
-  @Column({ name: 'ttctprc', nullable: false })
-  ttCtPrc: number;
+  @Column({ name: 'ttctprcevento', nullable: false })
+  ttCtPrcEvento: number;
 
   @Column({ name: 'userid', nullable: false })
   userId: number;
 
-  @Column({ name: 'statusevento', nullable: false })
-  statusEvento: string;
+  @Column({
+    name: 'statusevento',
+    type: 'enum',
+    enum: StatusEventoEnum,
+    default: StatusEventoEnum.PENDENTE,
+  })
+  statusEvento: StatusEventoEnum;
 
   @Column({ name: 'mes', nullable: false })
   mes: number;
@@ -42,6 +55,10 @@ export class PjesEventoEntity {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
+
+  @ManyToOne(() => PjesDistEntity, (pjesdist) => pjesdist.pjeseventos)
+  @JoinColumn({ name: 'pjesdistid', referencedColumnName: 'id' })
+  pjesdist?: PjesDistEntity;
 
   @OneToMany(
     () => PjesOperacaoEntity,

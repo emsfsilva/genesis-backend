@@ -1,0 +1,6 @@
+export enum StatusEventoEnum {
+  PENDENTE = 'PENDENTE',
+  REALIZADA = 'REALIZADA',
+  HOMOLOGADA = 'HOMOLOGADA',
+  PERMITIDO = 'PERMITIDO',
+}

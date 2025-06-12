@@ -11,6 +11,8 @@ import { CreateUserDto } from './dtos/createUser.dto';
 import { UpdatePasswordDTO } from './dtos/update-password.dto';
 import { UserEntity } from './entities/user.entity';
 import { MasterEntity } from 'src/master/entities/master.entity';
+import { AuxiliarEntity } from 'src/auxiliar/entities/auxiliar.entity';
+import { UserType } from './enum/user-type.enum';
 
 @Injectable()
 export class UserService {
@@ -20,29 +22,71 @@ export class UserService {
 
     @InjectRepository(MasterEntity)
     private readonly masterRepository: Repository<MasterEntity>,
+
+    @InjectRepository(AuxiliarEntity)
+    private readonly auxiliarRepository: Repository<AuxiliarEntity>,
   ) {}
 
   async createUser(createUserDto: CreateUserDto): Promise<UserEntity> {
-    const user = await this.findUserByEmail(createUserDto.email).catch(
+    const user = await this.findUserByLoginSei(createUserDto.loginSei).catch(
       () => undefined,
     );
 
     if (user) {
-      throw new BadGatewayException('Esse E-mail ja esta Cadastrado');
+      throw new BadGatewayException('Esse loginSei já está cadastrado');
     }
-    const passwordHashed = await createPasswordHashed(createUserDto.password);
 
-    // Criação do usuário
+    // Define a senha padrão
+    const passwordHashed = await createPasswordHashed('genesispmpe');
+
+    // Define o tipo com base no pg
+    const pg = createUserDto.pg.trim();
+    const pracas = ['Al Cfsd', 'Sd', 'Cb', '3º Sgt', '2º Sgt', '1º Sgt', 'St'];
+    const oficiais = [
+      'Al Cfoa',
+      'Al Cfo',
+      'Asp',
+      '2º Ten',
+      '1º Ten',
+      'Cap',
+      'Maj',
+      'Tc',
+      'Cel',
+    ];
+
+    let tipo: string | undefined = undefined;
+
+    if (pracas.includes(pg)) {
+      tipo = 'P';
+    } else if (oficiais.includes(pg)) {
+      tipo = 'O';
+    }
+
     const newUser = await this.userRepository.save({
       ...createUserDto,
       password: passwordHashed,
+      tipo,
     });
 
-    if (newUser.typeUser === 10) {
+    if (newUser.typeUser === UserType.Auxiliar) {
+      const auxiliar = new AuxiliarEntity();
+      auxiliar.userId = newUser.id;
+      await this.auxiliarRepository.save(auxiliar);
+    } else if (newUser.typeUser === UserType.Comum) {
+      //const comum = new ComumEntity();
+      //comum.userId = newUser.id;
+      //await this.comumRepository.save(comum);
+    } else if (newUser.typeUser === UserType.Gestao) {
+      //const gestao = new GestaoEntity();
+      //gestao.userId = newUser.id;
+      //await this.gestaoRepository.save(gestao);
+    } else if (newUser.typeUser === UserType.Master) {
       const master = new MasterEntity();
       master.userId = newUser.id;
       await this.masterRepository.save(master);
     }
+
+    console.log(' a variavel newUser é', newUser);
 
     return newUser;
   }
@@ -65,15 +109,17 @@ export class UserService {
     return user;
   }
 
-  async findUserByEmail(email: string): Promise<UserEntity> {
+  async findUserByLoginSei(loginSei: string): Promise<UserEntity> {
     const user = await this.userRepository.findOne({
       where: {
-        email,
+        loginSei,
       },
     });
 
     if (!user) {
-      throw new NotFoundException(`Email: ${email} Email não Encontrado`);
+      throw new NotFoundException(
+        `loginSei: ${loginSei} loginSei não Encontrado`,
+      );
     }
 
     return user;
@@ -121,7 +167,7 @@ export class UserService {
 
   async resetPassword(userId: number): Promise<UserEntity> {
     const user = await this.findUserById(userId);
-    const defaultPassword = 'atos';
+    const defaultPassword = 'genesispmpe';
     const passwordHashed = await createPasswordHashed(defaultPassword);
 
     user.password = passwordHashed;

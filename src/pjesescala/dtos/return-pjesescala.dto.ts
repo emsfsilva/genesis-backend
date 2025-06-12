@@ -11,6 +11,7 @@ export class ReturnPjesEscalaDto {
   nomeGuerraSgp: string;
   nomeCompletoSgp: string;
   omeSgp: number;
+  tipoSgp: string;
   nunfuncSgp: number;
   nunvincSgp: number;
   situacaoSgp: string;
@@ -20,8 +21,9 @@ export class ReturnPjesEscalaDto {
   horaFinal: string;
   phone?: string;
   localApresentacao?: string;
+  ttCota: number;
   userId: number;
-  statusOperacao: string;
+  statusEscala: string;
 
   // Relacionamentos aninhados
   pjesevento?: PjesEventoEntity;
@@ -44,6 +46,7 @@ export class ReturnPjesEscalaDto {
     this.nomeGuerraSgp = entity.nomeGuerraSgp;
     this.nomeCompletoSgp = entity.nomeCompletoSgp;
     this.omeSgp = entity.omeSgp;
+    this.tipoSgp = entity.tipoSgp;
     this.nunfuncSgp = entity.nunfuncSgp;
     this.nunvincSgp = entity.nunvincSgp;
     this.situacaoSgp = entity.situacaoSgp;
@@ -53,8 +56,9 @@ export class ReturnPjesEscalaDto {
     this.horaFinal = entity.horaFinal;
     this.phone = entity.phone;
     this.localApresentacao = entity.localApresentacao;
+    this.ttCota = entity.ttCota;
     this.userId = entity.userId;
-    this.statusOperacao = entity.statusOperacao;
+    this.statusEscala = entity.statusEscala;
 
     this.createdAt = entity.createdAt;
     this.updatedAt = entity.updatedAt;

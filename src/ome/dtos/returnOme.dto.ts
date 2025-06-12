@@ -7,6 +7,10 @@ export class ReturnOmeDto {
   diretoria?: {
     id: number;
     nomeDiretoria: string;
+    dpo?: {
+      id: number;
+      nomeDpo: string;
+    };
   };
 
   constructor(ome: OmeEntity) {
@@ -18,6 +22,12 @@ export class ReturnOmeDto {
       this.diretoria = {
         id: ome.diretoria.id,
         nomeDiretoria: ome.diretoria.nomeDiretoria,
+        dpo: ome.diretoria.dpo
+          ? {
+              id: ome.diretoria.dpo.id,
+              nomeDpo: ome.diretoria.dpo.nomeDpo,
+            }
+          : undefined,
       };
     }
   }

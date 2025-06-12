@@ -17,7 +17,7 @@ export class AuthService {
 
   async login(loginDto: LoginDto): Promise<ReturnLogin> {
     const user: UserEntity | undefined = await this.userService
-      .findUserByEmail(loginDto.email)
+      .findUserByLoginSei(loginDto.loginSei)
       .catch(() => undefined);
 
     const isMatch = await validatePassword(
@@ -26,7 +26,7 @@ export class AuthService {
     );
 
     if (!user || !isMatch) {
-      throw new NotFoundException('Email ou Password esta invalido');
+      throw new NotFoundException('loginSei ou Password esta invalido');
     }
 
     // Criar o LoginPayload com os dados do usuário

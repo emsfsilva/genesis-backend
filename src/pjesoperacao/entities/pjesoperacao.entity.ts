@@ -1,10 +1,13 @@
+import { PjesEscalaEntity } from 'src/pjesescala/entities/pjesescala.entity';
 import { PjesEventoEntity } from 'src/pjesevento/entities/pjesevento.entity';
+import { StatusOperacaoEnum } from 'src/utils/status-operacao.enum';
 import {
   Column,
   CreateDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -23,23 +26,22 @@ export class PjesOperacaoEntity {
   @Column({ name: 'omeid', nullable: false })
   omeId: number;
 
-  @Column({ name: 'ttctofdist', nullable: false })
-  ttCtOfDist: number;
+  @Column({ name: 'ttctofoper', nullable: false })
+  ttCtOfOper: number;
 
-  @Column({ name: 'ttctprcdist', nullable: false })
-  ttCtPrcDist: number;
-
-  @Column({ name: 'ttctofexe', nullable: false })
-  ttCtOfExe: number;
-
-  @Column({ name: 'ttctprcexe', nullable: false })
-  ttCtPrcExe: number;
+  @Column({ name: 'ttctprcoper', nullable: false })
+  ttCtPrcOper: number;
 
   @Column({ name: 'userid', nullable: false })
   userId: number;
 
-  @Column({ name: 'statusevento', nullable: false })
-  statusOperacao: string;
+  @Column({
+    name: 'statusoperacao',
+    type: 'enum',
+    enum: StatusOperacaoEnum,
+    default: StatusOperacaoEnum.PENDENTE,
+  })
+  statusOperacao: StatusOperacaoEnum;
 
   @Column({ name: 'mes', nullable: false })
   mes: number;
@@ -56,4 +58,7 @@ export class PjesOperacaoEntity {
   @ManyToOne(() => PjesEventoEntity, (pjesevento) => pjesevento.pjesoperacoes)
   @JoinColumn({ name: 'pjeseventoid', referencedColumnName: 'id' })
   pjesevento?: PjesEventoEntity;
+
+  @OneToMany(() => PjesEscalaEntity, (escala) => escala.pjesoperacao)
+  pjesescalas?: PjesEscalaEntity[];
 }

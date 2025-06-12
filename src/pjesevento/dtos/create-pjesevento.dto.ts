@@ -1,4 +1,5 @@
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { StatusEventoEnum } from 'src/utils/status-evento.enum';
 
 export class CreatePjesEventoDto {
   @IsString()
@@ -6,19 +7,22 @@ export class CreatePjesEventoDto {
   nomeEvento: string;
 
   @IsNumber()
+  pjesDistId: number;
+
+  @IsNumber()
   omeId: number;
 
   @IsNumber()
-  ttCtOf: number;
+  ttCtOfEvento: number;
 
   @IsNumber()
-  ttCtPrc: number;
+  ttCtPrcEvento: number;
 
   @IsNumber()
   userId: number;
 
-  @IsString()
-  statusEvento: string;
+  @IsEnum(StatusEventoEnum)
+  statusEvento: StatusEventoEnum;
 
   @IsNumber()
   mes: number;

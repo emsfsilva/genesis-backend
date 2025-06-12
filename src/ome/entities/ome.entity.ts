@@ -1,4 +1,6 @@
 import { DiretoriaEntity } from 'src/diretoria/entities/diretoria.entity';
+import { DpoEntity } from 'src/dpo/entities/dpo.entity';
+import { PjesEscalaEntity } from 'src/pjesescala/entities/pjesescala.entity';
 import { UserEntity } from 'src/user/entities/user.entity';
 import {
   Column,
@@ -34,4 +36,7 @@ export class OmeEntity {
   @ManyToOne(() => DiretoriaEntity, (diretoria) => diretoria.omes)
   @JoinColumn({ name: 'diretoriaid', referencedColumnName: 'id' })
   diretoria?: DiretoriaEntity;
+
+  @OneToMany(() => PjesEscalaEntity, (escala) => escala.ome)
+  escalas?: PjesEscalaEntity[];
 }

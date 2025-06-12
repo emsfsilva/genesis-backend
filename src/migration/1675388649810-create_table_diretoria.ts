@@ -6,6 +6,7 @@ export class createTableDiretoria1675388649810 implements MigrationInterface {
       CREATE TABLE public.diretoria (
         id SERIAL PRIMARY KEY,
         nomediretoria VARCHAR NOT NULL,
+        dpoid INTEGER NOT NULL,
         created_at TIMESTAMP DEFAULT now(),
         updated_at TIMESTAMP DEFAULT now()
       );

@@ -13,11 +13,15 @@ import {
 import { UserType } from '../enum/user-type.enum';
 import { MasterEntity } from 'src/master/entities/master.entity';
 import { OmeEntity } from 'src/ome/entities/ome.entity';
+import { AuxiliarEntity } from 'src/auxiliar/entities/auxiliar.entity';
 
 @Entity({ name: 'user' })
 export class UserEntity {
   @PrimaryGeneratedColumn('rowid')
   id: number;
+
+  @Column({ name: 'loginsei', nullable: false })
+  loginSei: string;
 
   @Column({ name: 'email', nullable: false })
   email: string;
@@ -33,6 +37,9 @@ export class UserEntity {
 
   @Column({ name: 'ng', nullable: false })
   nomeGuerra: string;
+
+  @Column({ name: 'tipo', nullable: false })
+  tipo: string;
 
   @Column({ name: 'omeid', nullable: false })
   omeId: number;
@@ -64,6 +71,9 @@ export class UserEntity {
 
   @OneToOne(() => MasterEntity, (master) => master.user)
   master?: MasterEntity;
+
+  @OneToOne(() => AuxiliarEntity, (auxiliar) => auxiliar.user)
+  auxiliar?: AuxiliarEntity;
 
   @ManyToOne(() => OmeEntity, (ome) => ome.users, { eager: true })
   @JoinColumn({ name: 'omeid' })

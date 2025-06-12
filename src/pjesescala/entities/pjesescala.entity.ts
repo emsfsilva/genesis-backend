@@ -1,3 +1,4 @@
+import { OmeEntity } from 'src/ome/entities/ome.entity';
 import { PjesEventoEntity } from 'src/pjesevento/entities/pjesevento.entity';
 import { PjesOperacaoEntity } from 'src/pjesoperacao/entities/pjesoperacao.entity';
 import { UserEntity } from 'src/user/entities/user.entity';
@@ -5,6 +6,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -12,6 +14,7 @@ import {
 } from 'typeorm';
 
 @Entity({ name: 'pjesescala' })
+@Index(['matSgp', 'dataInicio'], { unique: true })
 export class PjesEscalaEntity {
   @PrimaryGeneratedColumn('rowid')
   id: number;
@@ -40,6 +43,9 @@ export class PjesEscalaEntity {
   @Column({ name: 'omesgp', nullable: false })
   omeSgp: number;
 
+  @Column({ name: 'tiposgp', nullable: false })
+  tipoSgp: string;
+
   @Column({ name: 'nunfuncsgp', nullable: false })
   nunfuncSgp: number;
 
@@ -49,16 +55,16 @@ export class PjesEscalaEntity {
   @Column({ name: 'situacaosgp', nullable: false })
   situacaoSgp: string;
 
-  @Column({ name: 'datainicio', type: 'date', nullable: false })
+  @Column({ name: 'datainicio', type: 'date' })
   dataInicio: Date;
 
-  @Column({ name: 'datafinal', type: 'date', nullable: false })
+  @Column({ name: 'datafinal', type: 'date' })
   dataFinal: Date;
 
-  @Column({ name: 'horainicio', type: 'time', nullable: false })
+  @Column({ name: 'horainicio', length: 5 })
   horaInicio: string;
 
-  @Column({ name: 'horafinal', type: 'time', nullable: false })
+  @Column({ name: 'horafinal', length: 5 })
   horaFinal: string;
 
   @Column({ name: 'phone' })
@@ -67,11 +73,14 @@ export class PjesEscalaEntity {
   @Column({ name: 'localapresentacao' })
   localApresentacao: string;
 
+  @Column({ name: 'ttcota', nullable: false })
+  ttCota: number;
+
   @Column({ name: 'userid', nullable: false })
   userId: number;
 
-  @Column({ name: 'statusevento', nullable: false })
-  statusOperacao: string;
+  @Column({ name: 'statusescala', nullable: false })
+  statusEscala: string;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
@@ -92,4 +101,8 @@ export class PjesEscalaEntity {
   @ManyToOne(() => UserEntity)
   @JoinColumn({ name: 'userid', referencedColumnName: 'id' })
   user?: UserEntity;
+
+  @ManyToOne(() => OmeEntity)
+  @JoinColumn({ name: 'omeid', referencedColumnName: 'id' })
+  ome?: OmeEntity;
 }

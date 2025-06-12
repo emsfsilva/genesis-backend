@@ -5,11 +5,13 @@ export class createTableUser1675388649812 implements MigrationInterface {
     await queryRunner.query(`
       CREATE TABLE public.user (
         id integer NOT NULL,
+        loginsei character varying NOT NULL,
         email character varying NOT NULL,
         password character varying NOT NULL,
         pg character varying NOT NULL,
         mat integer NOT NULL,
         ng character varying NOT NULL,
+        tipo character varying NOT NULL,
         omeid integer NOT NULL,
         phone character varying NOT NULL,
         funcao character varying NOT NULL,

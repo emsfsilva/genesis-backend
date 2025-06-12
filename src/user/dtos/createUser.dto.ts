@@ -1,12 +1,15 @@
-import { IsString, IsEnum, IsNumber } from 'class-validator';
+import { IsString, IsEnum, IsNumber, IsOptional } from 'class-validator';
 import { UserType } from '../enum/user-type.enum';
 
 export class CreateUserDto {
   @IsString()
-  email: string;
+  loginSei: string;
 
   @IsString()
-  password: string;
+  email: string;
+
+  @IsOptional()
+  password?: string;
 
   @IsString()
   pg: string;
@@ -16,6 +19,10 @@ export class CreateUserDto {
 
   @IsString()
   nomeGuerra: string;
+
+  @IsOptional()
+  @IsString()
+  tipo: string;
 
   @IsNumber()
   omeId: number;

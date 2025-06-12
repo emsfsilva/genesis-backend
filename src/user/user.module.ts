@@ -5,9 +5,13 @@ import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { MasterEntity } from 'src/master/entities/master.entity';
 import { OmeModule } from 'src/ome/ome.module';
+import { AuxiliarEntity } from 'src/auxiliar/entities/auxiliar.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([UserEntity, MasterEntity]), OmeModule],
+  imports: [
+    TypeOrmModule.forFeature([UserEntity, MasterEntity, AuxiliarEntity]),
+    OmeModule,
+  ],
   controllers: [UserController],
   providers: [UserService],
   exports: [UserService, TypeOrmModule],

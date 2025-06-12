@@ -45,6 +45,12 @@ export class UserController {
     return users.map((userEntity) => new ReturnUserDto(userEntity)); // Transforma todos em ReturnUserDto
   }
 
+  @Get('/:userId')
+  async getUserById(@Param('userId') userId: number): Promise<ReturnUserDto> {
+    const user = await this.userService.findUserById(userId);
+    return new ReturnUserDto(user);
+  }
+
   @Patch('/:userId')
   async updateUser(
     @Param('userId') userId: number,

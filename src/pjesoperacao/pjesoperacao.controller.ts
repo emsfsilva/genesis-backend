@@ -7,20 +7,29 @@ import {
   Put,
   Delete,
   ParseIntPipe,
+  UseGuards,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { PjesOperacaoService } from './pjesoperacao.service';
 import { ReturnPjesOperacaoDto } from './dtos/return-pjesoperacao.dto';
 import { CreatePjesOperacaoDto } from './dtos/create-pjesoperacao.dto';
+import { User } from 'src/decorators/user.decorator';
+import { LoginPayload } from 'src/auth/dtos/loginPayload.dto';
+import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('pjesoperacao')
 export class PjesOperacaoController {
   constructor(private readonly pjesOperacaoService: PjesOperacaoService) {}
 
   @Post()
+  @UsePipes(new ValidationPipe({ transform: true }))
   async create(
     @Body() dto: CreatePjesOperacaoDto,
+    @User() user: LoginPayload,
   ): Promise<ReturnPjesOperacaoDto> {
-    return this.pjesOperacaoService.create(dto);
+    return this.pjesOperacaoService.create(dto, user);
   }
 
   @Get()
@@ -39,12 +48,16 @@ export class PjesOperacaoController {
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: CreatePjesOperacaoDto,
+    @User() user: LoginPayload,
   ): Promise<ReturnPjesOperacaoDto> {
-    return this.pjesOperacaoService.update(id, dto);
+    return this.pjesOperacaoService.update(id, dto, user); // <-- passa para o service
   }
 
   @Delete(':id')
-  async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
-    return this.pjesOperacaoService.remove(id);
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @User() user: LoginPayload, // <-- adiciona isso
+  ): Promise<void> {
+    return this.pjesOperacaoService.remove(id, user); // <-- passa para o service
   }
 }

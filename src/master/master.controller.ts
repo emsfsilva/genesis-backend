@@ -18,15 +18,7 @@ import { MasterService } from './master.service';
 import { CreateMasterDTO } from './dtos/create-master.dto';
 import { UpdateMasterDTO } from './dtos/update-master.dto';
 
-@Roles(
-  UserType.Master,
-  UserType.Comando,
-  UserType.CmtCa,
-  UserType.CmtCia,
-  UserType.Adm,
-  UserType.Monitor,
-  UserType.Aluno,
-)
+@Roles(UserType.Master, UserType.Gestao, UserType.Auxiliar, UserType.Comum)
 @UsePipes(ValidationPipe)
 @Controller('master')
 export class MasterController {

@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
   IsNotEmpty,
   IsNumber,
@@ -5,6 +6,8 @@ import {
   IsOptional,
   IsDateString,
   Matches,
+  IsDate,
+  Length,
 } from 'class-validator';
 
 export class CreatePjesEscalaDto {
@@ -40,6 +43,10 @@ export class CreatePjesEscalaDto {
   @IsNotEmpty()
   omeSgp: number;
 
+  @IsString()
+  @Length(1, 1)
+  tipoSgp: string;
+
   @IsNumber()
   @IsNotEmpty()
   nunfuncSgp: number;
@@ -53,21 +60,17 @@ export class CreatePjesEscalaDto {
   situacaoSgp: string;
 
   @IsDateString()
-  @IsNotEmpty()
-  dataInicio: string;
+  dataInicio: Date;
 
   @IsDateString()
-  @IsNotEmpty()
-  dataFinal: string;
+  dataFinal: Date;
 
-  @Matches(/^([01]\d|2[0-3]):([0-5]\d)(:[0-5]\d)?$/, {
-    message: 'horaInicio deve estar no formato HH:mm ou HH:mm:ss',
-  })
+  @IsString()
+  @Length(1, 5)
   horaInicio: string;
 
-  @Matches(/^([01]\d|2[0-3]):([0-5]\d)(:[0-5]\d)?$/, {
-    message: 'horaFinal deve estar no formato HH:mm ou HH:mm:ss',
-  })
+  @IsString()
+  @Length(1, 5)
   horaFinal: string;
 
   @IsString()
@@ -84,5 +87,5 @@ export class CreatePjesEscalaDto {
 
   @IsString()
   @IsNotEmpty()
-  statusOperacao: string;
+  statusEscala: string;
 }
