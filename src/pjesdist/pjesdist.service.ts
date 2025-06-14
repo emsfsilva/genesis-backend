@@ -8,16 +8,36 @@ import { Repository } from 'typeorm';
 import { PjesDistEntity } from './entities/pjesdist.entity';
 import { CreatePjesDistDto } from './dtos/create-pjesdist.dto';
 import { ReturnPjesDistDto } from './dtos/return-pjesdist.dto';
+import { LoginPayload } from 'src/auth/dtos/loginPayload.dto';
+import { PjesTetoEntity } from 'src/pjesteto/entities/pjesteto.entity';
 
 @Injectable()
 export class PjesDistService {
   constructor(
     @InjectRepository(PjesDistEntity)
     private readonly pjesDistRepository: Repository<PjesDistEntity>,
+
+    @InjectRepository(PjesTetoEntity)
+    private readonly pjesTetoRepository: Repository<PjesTetoEntity>,
   ) {}
 
-  async create(data: CreatePjesDistDto): Promise<ReturnPjesDistDto> {
-    const dist = this.pjesDistRepository.create(data);
+  async create(
+    data: CreatePjesDistDto,
+    user: LoginPayload,
+  ): Promise<ReturnPjesDistDto> {
+    const teto = await this.pjesTetoRepository.findOne({
+      where: { id: data.pjesTetoId },
+    });
+
+    if (!teto) {
+      throw new NotFoundException('Verba não encontrada.');
+    }
+
+    const dist = this.pjesDistRepository.create({
+      ...data,
+      codVerba: teto.codVerba,
+    });
+
     const saved = await this.pjesDistRepository.save(dist);
 
     const full = await this.pjesDistRepository.findOne({
@@ -31,6 +51,7 @@ export class PjesDistService {
   async update(
     id: number,
     data: Partial<CreatePjesDistDto>,
+    user: LoginPayload,
   ): Promise<ReturnPjesDistDto> {
     const existing = await this.pjesDistRepository.findOne({
       where: { id },
@@ -39,6 +60,13 @@ export class PjesDistService {
 
     if (!existing) {
       throw new NotFoundException('Distribuição não encontrada');
+    }
+
+    // ✅ Impede troca de teto
+    if (data.pjesTetoId && data.pjesTetoId !== existing.pjesTetoId) {
+      throw new BadRequestException(
+        'Não é permitido alterar o tipo da verba ja criada.',
+      );
     }
 
     const totalOfDistribuido =
@@ -61,6 +89,9 @@ export class PjesDistService {
         `Nova cota de praças (${data.ttCtPrcDist}) é menor que o total já distribuído (${totalPrcDistribuido}).`,
       );
     }
+
+    // 🔒 Remove pjesTetoId para garantir que não será alterado
+    delete data.pjesTetoId;
 
     const updated = this.pjesDistRepository.merge(existing, data);
     const saved = await this.pjesDistRepository.save(updated);
@@ -94,7 +125,7 @@ export class PjesDistService {
     return new ReturnPjesDistDto(dist);
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: number, user: LoginPayload): Promise<void> {
     const dist = await this.pjesDistRepository.findOne({
       where: { id },
       relations: ['pjeseventos'],

@@ -9,5 +9,6 @@ import { DiretoriaEntity } from 'src/diretoria/entities/diretoria.entity';
   imports: [TypeOrmModule.forFeature([OmeEntity, DiretoriaEntity])],
   providers: [OmeService],
   controllers: [OmeController],
+  exports: [TypeOrmModule],
 })
 export class OmeModule {}

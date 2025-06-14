@@ -8,6 +8,7 @@ export class createTablePjesEvento1675770516769 implements MigrationInterface {
         nomeevento VARCHAR NOT NULL,
         omeid INTEGER NOT NULL,
         pjesdistid INTEGER,
+        codverba INTEGER NOT NULL,
         ttctofevento INTEGER NOT NULL,
         ttctprcevento INTEGER NOT NULL,
         userid INTEGER NOT NULL,

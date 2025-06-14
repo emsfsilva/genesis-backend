@@ -9,6 +9,7 @@ export class createTablePjesOperacao1675770516770
         id SERIAL PRIMARY KEY,
 
         nomeoperacao VARCHAR NOT NULL,
+        codverba INTEGER NOT NULL,
         pjeseventoid INTEGER NOT NULL,
         omeid INTEGER NOT NULL,
 

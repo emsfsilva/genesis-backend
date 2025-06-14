@@ -20,12 +20,14 @@ import { PjestetoModule } from './pjesteto/pjesteto.module';
 import { AuxiliarModule } from './auxiliar/auxiliar.module';
 import { DpoModule } from './dpo/dpo.module';
 import { PjesDistModule } from './pjesdist/pjesdist.module';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: ['.env.development.local'],
+      isGlobal: true,
     }),
+
     TypeOrmModule.forRoot({
       type: 'postgres',
       database: process.env.DB_DATABASE,
@@ -57,6 +59,10 @@ import { PjesDistModule } from './pjesdist/pjesdist.module';
   ],
   controllers: [],
   providers: [
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard, // Usa o AuthGuard('jwt')
+    },
     {
       provide: APP_GUARD,
       useClass: RolesGuard,

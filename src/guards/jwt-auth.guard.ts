@@ -1,49 +1,24 @@
-import {
-  Injectable,
-  CanActivate,
-  ExecutionContext,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { Observable } from 'rxjs';
-import { Request } from 'express';
-import { LoginPayload } from 'src/auth/dtos/loginPayload.dto';
+import { Injectable, ExecutionContext } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { AuthGuard } from '@nestjs/passport';
+import { IS_PUBLIC_KEY } from 'src/decorators/public.decorator';
 
 @Injectable()
-// JwtAuthGuard protege rotas exigindo que o token JWT esteja presente e válido
-export class JwtAuthGuard implements CanActivate {
-  constructor(private jwtService: JwtService) {}
+export class JwtAuthGuard extends AuthGuard('jwt') {
+  constructor(private reflector: Reflector) {
+    super();
+  }
 
-  // Este método é executado sempre que uma rota protegida é acessada
-  canActivate(
-    context: ExecutionContext,
-  ): boolean | Promise<boolean> | Observable<boolean> {
-    // Acessa o objeto Request da requisição HTTP
-    const request = context.switchToHttp().getRequest<Request>();
-    const authHeader = request.headers['authorization']; // Ex: "Bearer eyJhbGciOi..."
+  canActivate(context: ExecutionContext) {
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
 
-    // Verifica se o cabeçalho Authorization está presente e bem formatado
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Token não fornecido ou malformado');
-    }
-
-    // Remove o prefixo "Bearer " para obter apenas o token JWT
-    const token = authHeader.replace('Bearer ', '');
-
-    try {
-      // Verifica e decodifica o token usando a chave secreta
-      const user = this.jwtService.verify<LoginPayload>(token, {
-        secret: process.env.JWT_SECRET,
-      });
-
-      // Anexa os dados do usuário decodificado no request (req.user)
-      request.user = user;
-
-      // Permite o acesso à rota
+    if (isPublic) {
       return true;
-    } catch (error) {
-      // Se a verificação falhar, lança erro de não autorizado
-      throw new UnauthorizedException('Token inválido ou expirado');
     }
+
+    return super.canActivate(context);
   }
 }

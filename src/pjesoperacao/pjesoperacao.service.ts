@@ -60,7 +60,10 @@ export class PjesOperacaoService {
     }
 
     // Se tudo ok, cria
-    const entity = this.pjesOperacaoRepository.create(dto);
+    const entity = this.pjesOperacaoRepository.create({
+      ...dto,
+      codVerba: evento.codVerba,
+    });
     const saved = await this.pjesOperacaoRepository.save(entity);
     return new ReturnPjesOperacaoDto(saved);
   }
@@ -154,6 +157,48 @@ export class PjesOperacaoService {
         `Atualização inválida: Uso das cotas das Praças excede o estabelecido pelo Evento`,
       );
     }
+
+    // Carrega as escalas da operação atual para validar o consumo real
+    const operacaoExistente = await this.pjesOperacaoRepository.findOne({
+      where: { id },
+      relations: ['pjesescalas'],
+    });
+
+    if (!operacaoExistente) {
+      throw new NotFoundException('Operação não encontrada');
+    }
+
+    // ✅ Impede troca de teto
+    if (dto.pjesEventoId && dto.pjesEventoId !== existing.pjesEventoId) {
+      throw new BadRequestException(
+        'Não é permitido alterar o tipo da verba ja criada.',
+      );
+    }
+
+    // Soma real de cotas consumidas já lançadas em escalas
+    const cotasConsumidasOficiais = operacaoExistente.pjesescalas
+      .filter((escala) => escala.tipoSgp?.toUpperCase() === 'O')
+      .reduce((sum, escala) => sum + escala.ttCota, 0);
+
+    const cotasConsumidasPracas = operacaoExistente.pjesescalas
+      .filter((escala) => escala.tipoSgp?.toUpperCase() === 'P')
+      .reduce((sum, escala) => sum + escala.ttCota, 0);
+
+    // Valida se o novo valor é menor do que o já consumido
+    if (dto.ttCtOfOper < cotasConsumidasOficiais) {
+      throw new BadRequestException(
+        `Não é possível reduzir cotas de Oficiais. Já foram consumidas nas escalas.`,
+      );
+    }
+
+    if (dto.ttCtPrcOper < cotasConsumidasPracas) {
+      throw new BadRequestException(
+        `Não é possível reduzir cotas de Praças. Já foram consumidas nas escalas.`,
+      );
+    }
+
+    // 🔒 Remove pjesEventoId para garantir que não será alterado
+    delete dto.pjesEventoId;
 
     const updated = this.pjesOperacaoRepository.merge(existing, dto);
     const saved = await this.pjesOperacaoRepository.save(updated);

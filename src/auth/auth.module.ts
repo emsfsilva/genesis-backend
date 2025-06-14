@@ -1,13 +1,14 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { UserModule } from '../user/user.module';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { JwtStrategy } from './strategies/jwt.strategy'; // <- aqui
 
 @Module({
   imports: [
-    UserModule,
+    forwardRef(() => UserModule),
     JwtModule.registerAsync({
       useFactory: () => ({
         secret: process.env.JWT_SECRET,
@@ -15,7 +16,7 @@ import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
       }),
     }),
   ],
-  providers: [AuthService, JwtAuthGuard],
+  providers: [AuthService, JwtAuthGuard, JwtStrategy],
   controllers: [AuthController],
   exports: [JwtModule, JwtAuthGuard],
 })

@@ -69,7 +69,10 @@ export class PjesEventoService {
     }
 
     // Criação do evento
-    const pjesevento = this.pjeseventoRepository.create(createDto);
+    const pjesevento = this.pjeseventoRepository.create({
+      ...createDto,
+      codVerba: dist.codVerba,
+    });
     const saved = await this.pjeseventoRepository.save(pjesevento);
     return saved;
   }
@@ -99,6 +102,13 @@ export class PjesEventoService {
 
     if (!existing) {
       throw new NotFoundException('Evento não encontrado');
+    }
+
+    // ✅ Impede troca de teto
+    if (updateDto.pjesDistId && updateDto.pjesDistId !== existing.pjesDistId) {
+      throw new BadRequestException(
+        'Não é permitido alterar o tipo da verba ja criada.',
+      );
     }
 
     // Busca a distribuição base
@@ -148,6 +158,8 @@ export class PjesEventoService {
         `Atualização inválida: praças excedem limite da distribuição (${novaSomaPrc} > ${dist.ttCtPrcDist})`,
       );
     }
+    // 🔒 Remove pjesTetoId para garantir que não será alterado
+    delete updateDto.pjesDistId;
 
     // Atualiza o evento
     const updated = this.pjeseventoRepository.merge(existing, updateDto);

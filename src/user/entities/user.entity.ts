@@ -3,6 +3,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   OneToMany,
@@ -16,6 +17,8 @@ import { OmeEntity } from 'src/ome/entities/ome.entity';
 import { AuxiliarEntity } from 'src/auxiliar/entities/auxiliar.entity';
 
 @Entity({ name: 'user' })
+@Index(['loginSei'], { unique: true })
+@Index(['mat'], { unique: true })
 export class UserEntity {
   @PrimaryGeneratedColumn('rowid')
   id: number;

@@ -6,6 +6,7 @@ export class createTablePjesEscala1675770516771 implements MigrationInterface {
       CREATE TABLE public.pjesescala (
         id SERIAL PRIMARY KEY,
         pjeseventoid INTEGER NOT NULL,
+        codverba INTEGER NOT NULL,
         pjesoperacaoid INTEGER NOT NULL,
         omeid INTEGER NOT NULL,
 

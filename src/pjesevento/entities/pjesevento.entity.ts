@@ -1,5 +1,4 @@
 import { PjesDistEntity } from 'src/pjesdist/entities/pjesdist.entity';
-import { PjesEscalaEntity } from 'src/pjesescala/entities/pjesescala.entity';
 import { PjesOperacaoEntity } from 'src/pjesoperacao/entities/pjesoperacao.entity';
 import { StatusEventoEnum } from 'src/utils/status-evento.enum';
 import {
@@ -23,6 +22,9 @@ export class PjesEventoEntity {
 
   @Column({ name: 'pjesdistid', nullable: false })
   pjesDistId: number;
+
+  @Column({ name: 'codverba', nullable: false })
+  codVerba: number;
 
   @Column({ name: 'omeid', nullable: false })
   omeId: number;

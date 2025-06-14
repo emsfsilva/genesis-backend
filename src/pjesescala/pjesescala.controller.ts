@@ -16,9 +16,13 @@ import { UpdatePjesEscalaDto } from './dtos/update-pjesescala.dto';
 import { User } from 'src/decorators/user.decorator';
 import { LoginPayload } from 'src/auth/dtos/loginPayload.dto';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/guards/roles.guard';
+import { Roles } from 'src/decorators/roles.decorator';
+import { UserType } from 'src/user/enum/user-type.enum';
 
-@UseGuards(JwtAuthGuard)
-@Controller('pjes-escala')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Controller('pjesescala')
+@Roles(UserType.Master, UserType.Auxiliar)
 export class PjesEscalaController {
   constructor(private readonly service: PjesEscalaService) {}
 

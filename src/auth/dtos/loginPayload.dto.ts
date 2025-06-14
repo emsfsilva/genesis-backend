@@ -8,6 +8,7 @@ export class LoginPayload {
   phone: string;
   pg: string;
   tipo: string;
+  omeId: number;
   mat: number;
   nomeGuerra: string;
   funcao: string;
@@ -20,6 +21,7 @@ export class LoginPayload {
     this.phone = user.phone;
     this.pg = user.pg;
     this.tipo = user.tipo;
+    this.omeId = user.omeId;
     this.mat = user.mat;
     this.nomeGuerra = user.nomeGuerra;
     this.funcao = user.funcao;

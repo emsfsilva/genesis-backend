@@ -1,7 +1,13 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  UnauthorizedException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ROLES_KEY } from '../decorators/roles.decorator'; // Decorador @Roles()
-import { UserType } from '../user/enum/user-type.enum'; // Enum com tipos de usuário
+import { ROLES_KEY } from '../decorators/roles.decorator';
+import { UserType } from '../user/enum/user-type.enum';
 import { Request } from 'express';
 import { LoginPayload } from 'src/auth/dtos/loginPayload.dto';
 
@@ -23,18 +29,19 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
-    // Obtém o objeto Request
     const request = context.switchToHttp().getRequest<Request>();
-
-    // Pega o usuário que foi preenchido pelo JwtAuthGuard
     const user = request.user as LoginPayload;
 
-    // Se não há usuário no request (token inválido?), nega acesso
+    // ✅ Verifica se o usuário está autenticado
     if (!user) {
-      return false;
+      throw new UnauthorizedException('Usuário não autenticado');
     }
 
-    // Verifica se o tipo do usuário está entre os exigidos
-    return requiredRoles.includes(user.typeUser);
+    // ✅ Verifica se o usuário tem permissão de acesso
+    if (!requiredRoles.includes(user.typeUser)) {
+      throw new ForbiddenException('Acesso não permitido para seu perfil');
+    }
+
+    return true;
   }
 }

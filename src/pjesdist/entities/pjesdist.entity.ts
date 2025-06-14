@@ -1,9 +1,12 @@
 import { PjesEventoEntity } from 'src/pjesevento/entities/pjesevento.entity';
+import { PjesTetoEntity } from 'src/pjesteto/entities/pjesteto.entity';
 import { StatusDistEnum } from 'src/utils/status-dist.enum';
 import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -16,6 +19,12 @@ export class PjesDistEntity {
 
   @Column({ name: 'nomedist', nullable: false })
   nomeDist: string;
+
+  @Column({ name: 'pjestetoid', nullable: false })
+  pjesTetoId: number;
+
+  @Column({ name: 'codverba', nullable: false })
+  codVerba: number;
 
   @Column({ name: 'diretoriaid', nullable: false })
   diretoriaId: number;
@@ -51,4 +60,8 @@ export class PjesDistEntity {
 
   @OneToMany(() => PjesEventoEntity, (pjesevento) => pjesevento.pjesdist)
   pjeseventos?: PjesEventoEntity[];
+
+  @ManyToOne(() => PjesTetoEntity, (pjesteto) => pjesteto.pjesdists)
+  @JoinColumn({ name: 'pjestetoid', referencedColumnName: 'id' })
+  pjesteto?: PjesTetoEntity;
 }

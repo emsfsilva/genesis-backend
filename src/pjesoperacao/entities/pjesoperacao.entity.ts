@@ -20,6 +20,9 @@ export class PjesOperacaoEntity {
   @Column({ name: 'nomeoperacao', nullable: false })
   nomeOperacao: string;
 
+  @Column({ name: 'codverba', nullable: false })
+  codVerba: number;
+
   @Column({ name: 'pjeseventoid', nullable: false })
   pjesEventoId: number;
 

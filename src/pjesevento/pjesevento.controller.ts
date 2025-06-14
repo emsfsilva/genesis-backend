@@ -15,9 +15,13 @@ import { CreatePjesEventoDto } from './dtos/create-pjesevento.dto';
 import { User } from 'src/decorators/user.decorator';
 import { LoginPayload } from 'src/auth/dtos/loginPayload.dto';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { Roles } from 'src/decorators/roles.decorator';
+import { UserType } from 'src/user/enum/user-type.enum';
+import { RolesGuard } from 'src/guards/roles.guard';
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('pjesevento')
+@Roles(UserType.Master, UserType.Auxiliar)
 export class PjesEventoController {
   constructor(private readonly pjeseventoService: PjesEventoService) {}
 

@@ -4,6 +4,7 @@ import { StatusEventoEnum } from 'src/utils/status-evento.enum';
 export class ReturnPjesEventoDto {
   id: number;
   pjesDistId: number;
+  codVerba: number;
   nomeEvento: string;
   omeId: number;
   ttCtOfEvento: number;
@@ -24,6 +25,7 @@ export class ReturnPjesEventoDto {
   constructor(entity: any) {
     this.id = entity.id;
     this.pjesDistId = entity.pjesDistId;
+    this.codVerba = entity.codVerba;
     this.omeId = entity.omeId;
     this.ttCtOfEvento = entity.ttCtOfEvento;
     this.ttCtPrcEvento = entity.ttCtPrcEvento;

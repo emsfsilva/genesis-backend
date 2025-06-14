@@ -6,6 +6,8 @@ export class ReturnPjesDistDto {
   id: number;
   nomeDist: string;
   diretoriaId: number;
+  pjesTetoId: number;
+  codVerba: number;
   ttCtOfDist: number;
   ttCtPrcDist: number;
   userId: number;
@@ -22,7 +24,9 @@ export class ReturnPjesDistDto {
   constructor(dist: PjesDistEntity) {
     this.id = dist.id;
     this.nomeDist = dist.nomeDist;
+    this.pjesTetoId = dist.pjesTetoId;
     this.diretoriaId = dist.diretoriaId;
+    this.codVerba = dist.codVerba;
     this.ttCtOfDist = dist.ttCtOfDist;
     this.ttCtPrcDist = dist.ttCtPrcDist;
     this.userId = dist.userId;
@@ -32,9 +36,8 @@ export class ReturnPjesDistDto {
     this.createdAt = dist.createdAt;
     this.updatedAt = dist.updatedAt;
 
-    if (dist.pjeseventos) {
+    if (Array.isArray(dist.pjeseventos) && dist.pjeseventos.length > 0) {
       this.eventos = dist.pjeseventos.map((ev) => new ReturnPjesEventoDto(ev));
-
       this.totalOfDistribuido = dist.pjeseventos.reduce(
         (sum, ev) => sum + ev.ttCtOfEvento,
         0,

@@ -4,6 +4,7 @@ import { PjesOperacaoEntity } from '../entities/pjesoperacao.entity';
 export class ReturnPjesOperacaoDto {
   id: number;
   nomeOperacao: string;
+  codVerba: number;
   omeId: number;
   pjesEventoId: number;
   ttCtOfOper: number;
@@ -25,6 +26,7 @@ export class ReturnPjesOperacaoDto {
   constructor(pjesOperacaoEntity: PjesOperacaoEntity) {
     this.id = pjesOperacaoEntity.id;
     this.nomeOperacao = pjesOperacaoEntity.nomeOperacao;
+    this.codVerba = pjesOperacaoEntity.codVerba;
     this.omeId = pjesOperacaoEntity.omeId;
     this.pjesEventoId = pjesOperacaoEntity.pjesEventoId;
     this.ttCtOfOper = pjesOperacaoEntity.ttCtOfOper;

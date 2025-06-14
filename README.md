@@ -71,3 +71,6 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](LICENSE).
+
+
+Linha removida do package.json : "start:dev": "ts-node -r dotenv/config -r tsconfig-paths/register src/main.ts",

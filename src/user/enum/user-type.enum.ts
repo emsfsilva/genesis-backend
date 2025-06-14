@@ -1,6 +1,8 @@
 export enum UserType {
   Auxiliar = 1,
   Comum = 2,
-  Gestao = 3,
+  Diretor = 3,
+  Gestao = 4,
+  Tecnico = 5,
   Master = 10,
 }

@@ -7,6 +7,9 @@ export class CreatePjesDistDto {
   nomeDist: string;
 
   @IsNumber()
+  pjesTetoId: number;
+
+  @IsNumber()
   diretoriaId: number;
 
   @IsNumber()

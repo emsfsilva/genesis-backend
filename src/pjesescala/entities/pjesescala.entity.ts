@@ -22,6 +22,9 @@ export class PjesEscalaEntity {
   @Column({ name: 'pjeseventoid', nullable: false })
   pjesEventoId: number;
 
+  @Column({ name: 'codverba', nullable: false })
+  codVerba: number;
+
   @Column({ name: 'pjesoperacaoid', nullable: false })
   pjesOperacaoId: number;
 
