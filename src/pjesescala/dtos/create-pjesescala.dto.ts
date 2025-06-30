@@ -5,8 +5,6 @@ import {
   IsString,
   IsOptional,
   IsDateString,
-  Matches,
-  IsDate,
   Length,
 } from 'class-validator';
 
@@ -39,9 +37,9 @@ export class CreatePjesEscalaDto {
   @IsNotEmpty()
   nomeCompletoSgp: string;
 
-  @IsNumber()
+  @IsString()
   @IsNotEmpty()
-  omeSgp: number;
+  omeSgp: string;
 
   @IsString()
   @Length(1, 1)
@@ -59,8 +57,8 @@ export class CreatePjesEscalaDto {
   @IsNotEmpty()
   situacaoSgp: string;
 
-  @IsDateString()
-  dataInicio: Date;
+  @IsString()
+  dataInicio: string;
 
   @IsDateString()
   dataFinal: Date;
@@ -79,7 +77,11 @@ export class CreatePjesEscalaDto {
 
   @IsString()
   @IsOptional()
-  localApresentacao?: string;
+  localApresentacaoSgp?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  funcao: string;
 
   @IsNumber()
   @IsNotEmpty()
@@ -88,4 +90,16 @@ export class CreatePjesEscalaDto {
   @IsString()
   @IsNotEmpty()
   statusEscala: string;
+
+  @IsString()
+  @IsOptional()
+  obs?: string;
+
+  @IsNumber()
+  @IsOptional()
+  userIdObs?: number;
+
+  @IsString()
+  @IsOptional()
+  dataObs?: string;
 }

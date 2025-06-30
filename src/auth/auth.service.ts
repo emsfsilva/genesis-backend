@@ -26,7 +26,7 @@ export class AuthService {
     );
 
     if (!user || !isMatch) {
-      throw new NotFoundException('loginSei ou Password esta invalido');
+      throw new NotFoundException('Login ou Senha invalido');
     }
     // Criar o LoginPayload com os dados do usuário
     const loginPayload = new LoginPayload(user);

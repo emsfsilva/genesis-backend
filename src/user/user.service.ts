@@ -30,7 +30,7 @@ export class UserService {
 
     @InjectRepository(OmeEntity)
     private readonly omeRepository: Repository<OmeEntity>,
-  ) {}
+  ) { }
 
   async createUser(
     createUserDto: CreateUserDto,
@@ -154,6 +154,13 @@ export class UserService {
     const user = await this.userRepository.findOne({
       where: {
         loginSei,
+      },
+      relations: {
+        ome: {
+          diretoria: {
+            dpo: false,
+          },
+        },
       },
     });
 

@@ -44,7 +44,7 @@ export class PjesEscalaEntity {
   nomeCompletoSgp: string;
 
   @Column({ name: 'omesgp', nullable: false })
-  omeSgp: number;
+  omeSgp: string;
 
   @Column({ name: 'tiposgp', nullable: false })
   tipoSgp: string;
@@ -73,8 +73,11 @@ export class PjesEscalaEntity {
   @Column({ name: 'phone' })
   phone: string;
 
-  @Column({ name: 'localapresentacao' })
-  localApresentacao: string;
+  @Column({ name: 'localapresentacaosgp' })
+  localApresentacaoSgp: string;
+
+  @Column({ name: 'funcao', nullable: false })
+  funcao: string;
 
   @Column({ name: 'ttcota', nullable: false })
   ttCota: number;
@@ -84,6 +87,15 @@ export class PjesEscalaEntity {
 
   @Column({ name: 'statusescala', nullable: false })
   statusEscala: string;
+
+  @Column({ name: 'obs' })
+  obs: string;
+
+  @Column({ name: 'useridobs' })
+  userIdObs: number;
+
+  @Column({ name: 'updatedobsat', type: 'timestamptz', nullable: true })
+  updatedObsAt: Date;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
@@ -104,6 +116,10 @@ export class PjesEscalaEntity {
   @ManyToOne(() => UserEntity)
   @JoinColumn({ name: 'userid', referencedColumnName: 'id' })
   user?: UserEntity;
+
+  @ManyToOne(() => UserEntity, { eager: true, nullable: true })
+  @JoinColumn({ name: 'useridobs' })
+  userObs?: UserEntity;
 
   @ManyToOne(() => OmeEntity)
   @JoinColumn({ name: 'omeid', referencedColumnName: 'id' })

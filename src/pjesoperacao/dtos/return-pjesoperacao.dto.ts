@@ -1,5 +1,6 @@
 import { StatusOperacaoEnum } from 'src/utils/status-operacao.enum';
 import { PjesOperacaoEntity } from '../entities/pjesoperacao.entity';
+import { PjesEscalaEntity } from 'src/pjesescala/entities/pjesescala.entity';
 
 export class ReturnPjesOperacaoDto {
   id: number;
@@ -19,6 +20,10 @@ export class ReturnPjesOperacaoDto {
     id: number;
     nomeEvento: string;
   };
+
+  pjesescalas?: PjesEscalaEntity[];
+
+  nomeOme?: string;
 
   ttCtOfExeOper: number;
   ttCtPrcExeOper: number;
@@ -56,6 +61,9 @@ export class ReturnPjesOperacaoDto {
         else if (isPrc) consumoPrc += escala.ttCota;
       }
     }
+
+    this.nomeOme = pjesOperacaoEntity.ome?.nomeOme;
+    this.pjesescalas = pjesOperacaoEntity.pjesescalas;
 
     this.ttCtOfExeOper = consumoOf;
     this.ttCtPrcExeOper = consumoPrc;

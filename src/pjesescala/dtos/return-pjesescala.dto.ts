@@ -11,7 +11,7 @@ export class ReturnPjesEscalaDto {
   matSgp: number;
   nomeGuerraSgp: string;
   nomeCompletoSgp: string;
-  omeSgp: number;
+  omeSgp: string;
   tipoSgp: string;
   nunfuncSgp: number;
   nunvincSgp: number;
@@ -21,18 +21,29 @@ export class ReturnPjesEscalaDto {
   horaInicio: string;
   horaFinal: string;
   phone?: string;
-  localApresentacao?: string;
+  localApresentacaoSgp?: string;
+  funcao: string;
   ttCota: number;
   userId: number;
   statusEscala: string;
+  obs: string;
+  userIdObs: number;
+  updatedObsAt: Date;
 
-  // Relacionamentos aninhados
   pjesevento?: PjesEventoEntity;
   pjesoperacao?: PjesOperacaoEntity;
 
-  // Dados derivados
   mes?: number;
   ano?: number;
+
+  userObs?: {
+    id: number;
+    pg: string;
+    nomeGuerra: string;
+    ome: {
+      nomeOMe: string;
+    };
+  };
 
   createdAt: Date;
   updatedAt: Date;
@@ -57,10 +68,14 @@ export class ReturnPjesEscalaDto {
     this.horaInicio = entity.horaInicio;
     this.horaFinal = entity.horaFinal;
     this.phone = entity.phone;
-    this.localApresentacao = entity.localApresentacao;
+    this.localApresentacaoSgp = entity.localApresentacaoSgp;
+    this.funcao = entity.funcao;
     this.ttCota = entity.ttCota;
     this.userId = entity.userId;
     this.statusEscala = entity.statusEscala;
+    this.obs = entity.obs;
+    this.userIdObs = entity.userIdObs;
+    this.updatedObsAt = entity.updatedObsAt;
 
     this.createdAt = entity.createdAt;
     this.updatedAt = entity.updatedAt;
@@ -72,5 +87,16 @@ export class ReturnPjesEscalaDto {
     // Dados derivados (caso queira simplificar o consumo no frontend)
     this.mes = entity.pjesevento?.mes ?? undefined;
     this.ano = entity.pjesevento?.ano ?? undefined;
+
+    if (entity.userObs) {
+      this.userObs = {
+        id: entity.userObs.id,
+        pg: entity.userObs.pg,
+        nomeGuerra: entity.userObs.nomeGuerra,
+        ome: {
+          nomeOMe: entity.userObs.ome?.nomeOme ?? null,
+        },
+      };
+    }
   }
 }

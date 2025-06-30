@@ -21,6 +21,8 @@ import { AuxiliarModule } from './auxiliar/auxiliar.module';
 import { DpoModule } from './dpo/dpo.module';
 import { PjesDistModule } from './pjesdist/pjesdist.module';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { AppController } from './app.controller';
+import { DadosSgpModule } from './dadossgp/dadossgp.module';
 
 @Module({
   imports: [
@@ -56,8 +58,9 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
     AuxiliarModule,
     DpoModule,
     PjesDistModule,
+    DadosSgpModule,
   ],
-  controllers: [],
+  controllers: [AppController],
   providers: [
     {
       provide: APP_GUARD,

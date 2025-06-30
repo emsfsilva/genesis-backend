@@ -1,3 +1,4 @@
+import { OmeEntity } from 'src/ome/entities/ome.entity';
 import { PjesEscalaEntity } from 'src/pjesescala/entities/pjesescala.entity';
 import { PjesEventoEntity } from 'src/pjesevento/entities/pjesevento.entity';
 import { StatusOperacaoEnum } from 'src/utils/status-operacao.enum';
@@ -42,7 +43,7 @@ export class PjesOperacaoEntity {
     name: 'statusoperacao',
     type: 'enum',
     enum: StatusOperacaoEnum,
-    default: StatusOperacaoEnum.PENDENTE,
+    default: StatusOperacaoEnum.AUTORIZADA,
   })
   statusOperacao: StatusOperacaoEnum;
 
@@ -64,4 +65,8 @@ export class PjesOperacaoEntity {
 
   @OneToMany(() => PjesEscalaEntity, (escala) => escala.pjesoperacao)
   pjesescalas?: PjesEscalaEntity[];
+
+  @ManyToOne(() => OmeEntity)
+  @JoinColumn({ name: 'omeid', referencedColumnName: 'id' })
+  ome: OmeEntity;
 }

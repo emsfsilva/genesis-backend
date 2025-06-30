@@ -26,11 +26,15 @@ export class PjesDistService {
     user: LoginPayload,
   ): Promise<ReturnPjesDistDto> {
     const teto = await this.pjesTetoRepository.findOne({
-      where: { id: data.pjesTetoId },
+      where: {
+        id: data.pjesTetoId,
+        mes: data.mes,
+        ano: data.ano,
+      },
     });
 
     if (!teto) {
-      throw new NotFoundException('Verba não encontrada.');
+      throw new BadRequestException(`É nescessário escolher um tipo de Verba`);
     }
 
     const dist = this.pjesDistRepository.create({
@@ -42,7 +46,7 @@ export class PjesDistService {
 
     const full = await this.pjesDistRepository.findOne({
       where: { id: saved.id },
-      relations: ['pjeseventos'],
+      relations: ['pjeseventos', 'diretoria'],
     });
 
     return new ReturnPjesDistDto(full);
@@ -98,7 +102,7 @@ export class PjesDistService {
 
     const full = await this.pjesDistRepository.findOne({
       where: { id: saved.id },
-      relations: ['pjeseventos'],
+      relations: ['pjeseventos', 'diretoria'],
     });
 
     return new ReturnPjesDistDto(full);
@@ -106,7 +110,7 @@ export class PjesDistService {
 
   async findAll(): Promise<ReturnPjesDistDto[]> {
     const dists = await this.pjesDistRepository.find({
-      relations: ['pjeseventos'],
+      relations: ['pjeseventos', 'diretoria'],
     });
 
     return dists.map((dist) => new ReturnPjesDistDto(dist));

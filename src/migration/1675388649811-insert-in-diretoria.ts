@@ -5,6 +5,7 @@ export class insertInDiretoria1675388649811 implements MigrationInterface {
     await queryRunner.query(`
       INSERT INTO public."diretoria" (nomediretoria, dpoid)
       VALUES 
+        ('DPO', 1),
         ('DIM', 1),
         ('DIRESP', 1),
         ('DINTER I', 1),

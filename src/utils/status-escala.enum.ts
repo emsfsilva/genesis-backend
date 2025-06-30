@@ -1,5 +1,4 @@
-export enum StatusDistEnum {
-  //PENDENTE = 'PENDENTE',
+export enum StatusEscalaEnum {
   AUTORIZADA = 'AUTORIZADA',
   HOMOLOGADA = 'HOMOLOGADA',
 }

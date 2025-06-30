@@ -1,3 +1,4 @@
+import { DiretoriaEntity } from 'src/diretoria/entities/diretoria.entity';
 import { PjesEventoEntity } from 'src/pjesevento/entities/pjesevento.entity';
 import { PjesTetoEntity } from 'src/pjesteto/entities/pjesteto.entity';
 import { StatusDistEnum } from 'src/utils/status-dist.enum';
@@ -42,7 +43,7 @@ export class PjesDistEntity {
     name: 'statusdist',
     type: 'enum',
     enum: StatusDistEnum,
-    default: StatusDistEnum.PENDENTE,
+    default: StatusDistEnum.AUTORIZADA,
   })
   statusDist: StatusDistEnum;
 
@@ -64,4 +65,8 @@ export class PjesDistEntity {
   @ManyToOne(() => PjesTetoEntity, (pjesteto) => pjesteto.pjesdists)
   @JoinColumn({ name: 'pjestetoid', referencedColumnName: 'id' })
   pjesteto?: PjesTetoEntity;
+
+  @ManyToOne(() => DiretoriaEntity)
+  @JoinColumn({ name: 'diretoriaid', referencedColumnName: 'id' })
+  diretoria: DiretoriaEntity;
 }

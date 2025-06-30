@@ -17,6 +17,7 @@ import { CreatePjesOperacaoDto } from './dtos/create-pjesoperacao.dto';
 import { User } from 'src/decorators/user.decorator';
 import { LoginPayload } from 'src/auth/dtos/loginPayload.dto';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { UpdateStatusPjesOperacaoDto } from './dtos/update-status-pjesoperacao.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('pjesoperacao')
@@ -51,6 +52,15 @@ export class PjesOperacaoController {
     @User() user: LoginPayload,
   ): Promise<ReturnPjesOperacaoDto> {
     return this.pjesOperacaoService.update(id, dto, user); // <-- passa para o service
+  }
+
+  @Put(':id/status')
+  async updateStatusOperacao(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateStatusPjesOperacaoDto,
+    @User() user: LoginPayload,
+  ): Promise<ReturnPjesOperacaoDto> {
+    return this.pjesOperacaoService.updateStatusOperacao(id, dto, user);
   }
 
   @Delete(':id')

@@ -21,6 +21,8 @@ export class ReturnPjesDistDto {
   totalOfDistribuido: number;
   totalPrcDistribuido: number;
 
+  nomeDiretoria: string;
+
   constructor(dist: PjesDistEntity) {
     this.id = dist.id;
     this.nomeDist = dist.nomeDist;
@@ -35,6 +37,9 @@ export class ReturnPjesDistDto {
     this.ano = dist.ano;
     this.createdAt = dist.createdAt;
     this.updatedAt = dist.updatedAt;
+
+
+    this.nomeDiretoria = dist.diretoria?.nomeDiretoria;
 
     if (Array.isArray(dist.pjeseventos) && dist.pjeseventos.length > 0) {
       this.eventos = dist.pjeseventos.map((ev) => new ReturnPjesEventoDto(ev));

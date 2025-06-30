@@ -10,6 +10,7 @@ import { ReturnPjesEventoDto } from './dtos/return-pjesevento.dto';
 import { CreatePjesEventoDto } from './dtos/create-pjesevento.dto';
 import { PjesDistEntity } from 'src/pjesdist/entities/pjesdist.entity';
 import { LoginPayload } from 'src/auth/dtos/loginPayload.dto';
+import { UpdateStatusPjesEventoDto } from './dtos/update-status-pjesevento.dto';
 
 @Injectable()
 export class PjesEventoService {
@@ -74,11 +75,22 @@ export class PjesEventoService {
       codVerba: dist.codVerba,
     });
     const saved = await this.pjeseventoRepository.save(pjesevento);
-    return saved;
+
+    // Recarrega com relação `ome` incluída
+    const withRelations = await this.pjeseventoRepository.findOne({
+      where: { id: saved.id },
+      relations: ['ome'],
+    });
+
+    return new ReturnPjesEventoDto(withRelations);
   }
 
   async findAll(): Promise<ReturnPjesEventoDto[]> {
-    return this.pjeseventoRepository.find();
+    const eventos = await this.pjeseventoRepository.find({
+      relations: ['ome', 'ome.diretoria', 'pjesoperacoes.pjesescalas'],
+    });
+
+    return eventos.map((evento) => new ReturnPjesEventoDto(evento));
   }
 
   async findOne(id: number): Promise<ReturnPjesEventoDto> {
@@ -163,7 +175,46 @@ export class PjesEventoService {
 
     // Atualiza o evento
     const updated = this.pjeseventoRepository.merge(existing, updateDto);
-    return this.pjeseventoRepository.save(updated);
+    await this.pjeseventoRepository.save(updated);
+
+    const withRelations = await this.pjeseventoRepository.findOne({
+      where: { id },
+      relations: ['ome'],
+    });
+
+    return new ReturnPjesEventoDto(withRelations);
+  }
+
+  async updateStatusEvento(
+    id: number,
+    dto: UpdateStatusPjesEventoDto,
+    user: LoginPayload,
+  ): Promise<ReturnPjesEventoDto> {
+    const evento = await this.pjeseventoRepository.findOne({
+      where: { id },
+      relations: ['pjesdist', 'ome'],
+    });
+
+    if (!evento) {
+      throw new NotFoundException('Evento não encontrado');
+    }
+
+    const dist = evento.pjesdist;
+
+    if (!dist) {
+      throw new NotFoundException('Distribuição do evento não encontrada');
+    }
+
+    if (dist.statusDist === 'HOMOLOGADA' && user.typeUser !== 10) {
+      throw new BadRequestException(
+        'Evento pertencente a uma distribuição homologada. Alteração não permitida.',
+      );
+    }
+
+    evento.statusEvento = dto.statusEvento;
+    const saved = await this.pjeseventoRepository.save(evento);
+
+    return new ReturnPjesEventoDto(saved);
   }
 
   async remove(id: number, user: LoginPayload): Promise<void> {

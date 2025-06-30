@@ -13,6 +13,9 @@ export class PjesTetoEntity {
   @PrimaryGeneratedColumn('rowid')
   id: number;
 
+  @Column({ name: 'imagem_url', nullable: true })
+  imagemUrl: string;
+
   @Column({ name: 'nomeverba', nullable: false })
   nomeVerba: string;
 

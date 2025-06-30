@@ -1,3 +1,4 @@
+import { ReturnOmeDto } from 'src/ome/dtos/returnOme.dto';
 import { UserEntity } from '../../user/entities/user.entity';
 
 //Esses são os dados do TOKEN
@@ -13,6 +14,7 @@ export class LoginPayload {
   nomeGuerra: string;
   funcao: string;
   typeUser: number;
+  ome?: ReturnOmeDto;
 
   constructor(user: UserEntity) {
     this.id = user.id;
@@ -26,5 +28,6 @@ export class LoginPayload {
     this.nomeGuerra = user.nomeGuerra;
     this.funcao = user.funcao;
     this.typeUser = user.typeUser;
+    this.ome = user.ome ? new ReturnOmeDto(user.ome) : undefined;
   }
 }

@@ -14,7 +14,7 @@ export class createTablePjesEscala1675770516771 implements MigrationInterface {
         matsgp INTEGER NOT NULL,
         ngsgp VARCHAR NOT NULL,
         nomecompletosgp VARCHAR NOT NULL,
-        omesgp INTEGER NOT NULL,
+        omesgp VARCHAR NOT NULL,
         tiposgp VARCHAR NOT NULL,
         nunfuncsgp INTEGER NOT NULL,
         nunvincsgp INTEGER NOT NULL,
@@ -26,11 +26,16 @@ export class createTablePjesEscala1675770516771 implements MigrationInterface {
         horafinal TIME NOT NULL,
 
         phone VARCHAR,
-        localapresentacao VARCHAR,
+        localapresentacaosgp VARCHAR,
+        funcao VARCHAR,
 
         ttcota INTEGER NOT NULL,
         userid INTEGER NOT NULL,
         statusescala VARCHAR NOT NULL,
+        obs VARCHAR,
+
+        useridobs INTEGER,
+        updatedobsat TIMESTAMP,
 
         created_at TIMESTAMP DEFAULT now(),
         updated_at TIMESTAMP DEFAULT now(),
@@ -53,6 +58,11 @@ export class createTablePjesEscala1675770516771 implements MigrationInterface {
         CONSTRAINT fk_pjesescala_userid FOREIGN KEY (userid)
           REFERENCES public."user"(id)
           ON DELETE CASCADE
+          ON UPDATE CASCADE,
+
+        CONSTRAINT fk_pjesescala_useridobs FOREIGN KEY (useridobs)
+          REFERENCES public."user"(id)
+          ON DELETE SET NULL
           ON UPDATE CASCADE
       );
 

@@ -5,6 +5,7 @@ export class createTablePjesTeto1675388649809 implements MigrationInterface {
     await queryRunner.query(`
       CREATE TABLE public.pjesteto (
         id SERIAL PRIMARY KEY,
+        imagem_url VARCHAR,
         nomeverba VARCHAR NOT NULL,
         codverba INTEGER NOT NULL,
         tetoof NUMERIC NOT NULL,

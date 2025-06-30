@@ -1,4 +1,5 @@
 import { PjesDistEntity } from 'src/pjesdist/entities/pjesdist.entity';
+import { PjesOperacaoEntity } from 'src/pjesoperacao/entities/pjesoperacao.entity';
 import { StatusEventoEnum } from 'src/utils/status-evento.enum';
 
 export class ReturnPjesEventoDto {
@@ -14,10 +15,18 @@ export class ReturnPjesEventoDto {
 
   // Relacionamentos aninhados
   pjesdist?: PjesDistEntity;
+  pjesoperacoes?: PjesOperacaoEntity[];
+
+  somaCtOfOper?: number;
+  somaCtPrcOper?: number;
+  somaCotaOfEscala?: number;
+  somaCotaPrcEscala?: number;
 
   // Dados derivados
   mes?: number;
   ano?: number;
+
+  nomeOme?: string;
 
   createdAt: Date;
   updatedAt: Date;
@@ -26,6 +35,7 @@ export class ReturnPjesEventoDto {
     this.id = entity.id;
     this.pjesDistId = entity.pjesDistId;
     this.codVerba = entity.codVerba;
+    this.nomeEvento = entity.nomeEvento;
     this.omeId = entity.omeId;
     this.ttCtOfEvento = entity.ttCtOfEvento;
     this.ttCtPrcEvento = entity.ttCtPrcEvento;
@@ -33,15 +43,38 @@ export class ReturnPjesEventoDto {
     this.statusEvento = entity.statusEvento;
     this.mes = entity.mes;
     this.ano = entity.ano;
-
     this.createdAt = entity.createdAt;
     this.updatedAt = entity.updatedAt;
-
-    // Relacionamentos completos (aninhados)
     this.pjesdist = entity.pjesdist;
+    this.nomeOme = entity.ome?.nomeOme;
+    this.pjesoperacoes = entity.pjesoperacoes;
 
-    // Dados derivados (caso queira simplificar o consumo no frontend)
-    this.mes = entity.pjesevento?.mes ?? undefined;
-    this.ano = entity.pjesevento?.ano ?? undefined;
+    // Soma cotas de operações
+    this.somaCtOfOper = entity.pjesoperacoes?.reduce(
+      (sum, op) => sum + (op.ttCtOfOper || 0),
+      0,
+    );
+
+    this.somaCtPrcOper = entity.pjesoperacoes?.reduce(
+      (sum, op) => sum + (op.ttCtPrcOper || 0),
+      0,
+    );
+
+    // ✅ Soma real de cotas por tipo de escala:
+    let totalOf = 0;
+    let totalPrc = 0;
+
+    for (const operacao of entity.pjesoperacoes || []) {
+      for (const escala of operacao.pjesescalas || []) {
+        if (escala.tipoSgp === 'O') {
+          totalOf += escala.ttCota || 0;
+        } else if (escala.tipoSgp === 'P') {
+          totalPrc += escala.ttCota || 0;
+        }
+      }
+    }
+
+    this.somaCotaOfEscala = totalOf;
+    this.somaCotaPrcEscala = totalPrc;
   }
 }

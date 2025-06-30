@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, Not, Raw, Repository } from 'typeorm';
+import { Between, EntityManager, Not, Raw, Repository } from 'typeorm';
 import { PjesEscalaEntity } from './entities/pjesescala.entity';
 import { PjesEventoEntity } from 'src/pjesevento/entities/pjesevento.entity';
 import { CreatePjesEscalaDto } from './dtos/create-pjesescala.dto';
@@ -13,6 +13,9 @@ import { PjesOperacaoEntity } from 'src/pjesoperacao/entities/pjesoperacao.entit
 import { LoginPayload } from 'src/auth/dtos/loginPayload.dto';
 import { OmeEntity } from 'src/ome/entities/ome.entity';
 import { DataSource } from 'typeorm';
+import { ReturnPjesEscalaDto } from './dtos/return-pjesescala.dto';
+import { UpdateStatusPjesEscalaDto } from './dtos/update-status-pjesescala.dto';
+import { UpdateObsPjesEscalaDto } from './dtos/update-obs-pjesescala.dto';
 
 @Injectable()
 export class PjesEscalaService {
@@ -67,11 +70,60 @@ export class PjesEscalaService {
     const escalas = await queryBuilder.getMany();
     const totalCotas = escalas.reduce((sum, esc) => sum + esc.ttCota, 0);
 
-    if (totalCotas + novaCota > 3) {
+    if (totalCotas + novaCota > 12) {
       throw new BadRequestException(
         'Usuário não pode ultrapassar o limite de cotas mensais (12).',
       );
     }
+  }
+
+  async getCotasDetalhadasPorMatricula(
+    matSgp: number,
+    ano: number,
+    mes: number,
+  ): Promise<{ dia: string; nomeOme: string; ttCota: number }[]> {
+    const escalas = await this.pjesEscalaRepository
+      .createQueryBuilder('escala')
+      .leftJoinAndSelect('escala.ome', 'ome')
+      .where('escala.matSgp = :matSgp', { matSgp })
+      .andWhere('EXTRACT(MONTH FROM escala.dataInicio) = :mes', { mes })
+      .andWhere('EXTRACT(YEAR FROM escala.dataInicio) = :ano', { ano })
+      .orderBy('escala.dataInicio', 'ASC')
+      .getMany();
+
+    return escalas.map((escala) => ({
+      dia: new Date(escala.dataInicio).toISOString().split('T')[0],
+      nomeOme: escala.ome?.nomeOme || escala.omeSgp,
+      ttCota: escala.ttCota,
+    }));
+  }
+
+  async getQuantidadePorMatriculaAnoMes(
+    matSgp: number,
+    ano: number | string,
+    mes: number | string,
+  ): Promise<number> {
+    const parsedAno = parseInt(ano as string, 10);
+    const parsedMes = parseInt(mes as string, 10);
+
+    if (isNaN(parsedAno) || isNaN(parsedMes)) {
+      throw new BadRequestException('Ano ou mês inválido');
+    }
+
+    const inicio = new Date(parsedAno, parsedMes - 1, 1);
+    const fim = new Date(parsedAno, parsedMes, 0, 23, 59, 59, 999); // fim do mês
+
+    const resultado = await this.pjesEscalaRepository
+      .createQueryBuilder('escala')
+      .select('SUM(escala.ttCota)', 'total')
+      .where('escala.matSgp = :matSgp', { matSgp })
+      .andWhere('escala.dataInicio BETWEEN :inicio AND :fim', {
+        inicio,
+        fim,
+      })
+      .getRawOne();
+
+    return Number(resultado.total) || 0;
   }
 
   async create(
@@ -149,16 +201,25 @@ export class PjesEscalaService {
         throw new NotFoundException(`OME não encontrada com id: ${dto.omeId}`);
       }
 
-      const escalaExistente = await manager.findOne(PjesEscalaEntity, {
-        where: {
-          matSgp: dto.matSgp,
+      const escalaExistente = await manager
+        .getRepository(PjesEscalaEntity)
+        .createQueryBuilder('escala')
+        .where('escala.matSgp = :matSgp', { matSgp: dto.matSgp })
+        .andWhere('escala.dataInicio = :dataInicio', {
           dataInicio: dto.dataInicio,
-        },
-      });
+        })
+        .getOne();
 
       if (escalaExistente) {
+        // Busca a OME da escala existente
+        const omeDaEscalaExistente = await manager.findOne(OmeEntity, {
+          where: { id: escalaExistente.omeId },
+        });
+
         throw new BadRequestException(
-          `Já existe uma escala para o militar ${dto.matSgp} na data ${dto.dataInicio} na OME: ${ome.nomeOme}.`,
+          `Já existe uma escala para o militar ${dto.matSgp} na data ${
+            dto.dataInicio
+          } na OME: ${omeDaEscalaExistente?.nomeOme || 'desconhecida'}.`,
         );
       }
 
@@ -185,16 +246,42 @@ export class PjesEscalaService {
     });
   }
 
-  async findAll(): Promise<PjesEscalaEntity[]> {
-    return await this.pjesEscalaRepository.find({
-      relations: ['pjesoperacao', 'pjesevento', 'pjesevento.pjesdist'],
-    });
+  async findAll(
+    operacaoId?: number,
+    ano?: number,
+    mes?: number,
+  ): Promise<PjesEscalaEntity[]> {
+    const query = this.pjesEscalaRepository
+      .createQueryBuilder('escala')
+      .leftJoinAndSelect('escala.pjesoperacao', 'pjesoperacao')
+      .leftJoinAndSelect('escala.pjesevento', 'pjesevento')
+      .leftJoinAndSelect('pjesevento.pjesdist', 'pjesdist');
+
+    if (operacaoId) {
+      query.andWhere('escala.pjesOperacaoId = :operacaoId', { operacaoId });
+    }
+
+    if (ano) {
+      query.andWhere('EXTRACT(YEAR FROM escala.dataInicio) = :ano', { ano });
+    }
+
+    if (mes) {
+      query.andWhere('EXTRACT(MONTH FROM escala.dataInicio) = :mes', { mes });
+    }
+
+    return await query.getMany();
   }
 
   async findOne(id: number): Promise<PjesEscalaEntity> {
     const escala = await this.pjesEscalaRepository.findOne({
       where: { id },
-      relations: ['pjesoperacao', 'pjesevento', 'pjesevento.pjesdist'],
+      relations: [
+        'pjesoperacao',
+        'pjesevento',
+        'pjesevento.pjesdist',
+        'userObs',
+        'userObs.ome',
+      ],
     });
 
     if (!escala) {
@@ -271,19 +358,26 @@ export class PjesEscalaService {
       }
 
       const matSgp = dto.matSgp ?? escalaAtual.matSgp;
-      const dataInicioStr = dataInicio.toISOString().slice(0, 10);
 
-      const existeOutra = await manager.findOne(PjesEscalaEntity, {
-        where: {
-          matSgp,
-          dataInicio: Raw((alias) => `${alias} = DATE '${dataInicioStr}'`),
-          id: Not(id),
-        },
-      });
+      const existeoutra = await manager
+        .getRepository(PjesEscalaEntity)
+        .createQueryBuilder('escala')
+        .where('escala.matSgp = :matSgp', { matSgp: dto.matSgp })
+        .andWhere('escala.dataInicio = :dataInicio', {
+          dataInicio: dto.dataInicio,
+        })
+        .getOne();
 
-      if (existeOutra) {
+      if (existeoutra) {
+        // Busca a OME da escala existente
+        const omeDaEscalaExistente = await manager.findOne(OmeEntity, {
+          where: { id: existeoutra.omeId },
+        });
+
         throw new BadRequestException(
-          `Militar ${matSgp} já possui uma escala em ${dataInicioStr} na OME: ${ome.nomeOme}.`,
+          `Já existe uma escala para o militar ${dto.matSgp} na data ${
+            dto.dataInicio
+          } na OME: ${omeDaEscalaExistente?.nomeOme || 'desconhecida'}.`,
         );
       }
 
@@ -350,6 +444,71 @@ export class PjesEscalaService {
     });
   }
 
+  async updateStatusEscala(
+    id: number,
+    dto: UpdateStatusPjesEscalaDto,
+    user: LoginPayload,
+  ): Promise<ReturnPjesEscalaDto> {
+    const escala = await this.pjesEscalaRepository.findOne({
+      where: { id },
+      relations: ['pjesevento'], // 👈 necessário para acessar o status do evento
+    });
+
+    if (!escala) {
+      throw new NotFoundException('Escala não encontrada');
+    }
+
+    // ✅ Verifica se o evento está homologado
+    if (
+      escala.pjesevento?.statusEvento === 'HOMOLOGADA' &&
+      user.typeUser !== 1
+    ) {
+      throw new BadRequestException(
+        'O Evento está homologado. Escala não pode ser modificada.',
+      );
+    }
+
+    escala.statusEscala = dto.statusEscala;
+
+    const saved = await this.pjesEscalaRepository.save(escala);
+
+    return new ReturnPjesEscalaDto(saved);
+  }
+
+  async registrarObs(
+    id: number,
+    dto: UpdateObsPjesEscalaDto,
+    user: LoginPayload,
+  ): Promise<ReturnPjesEscalaDto> {
+    const escala = await this.pjesEscalaRepository.findOne({
+      where: { id },
+      relations: ['pjesevento', 'userObs'],
+    });
+
+    if (!escala) {
+      throw new NotFoundException('Escala não encontrada');
+    }
+
+    this.verificarPermissaoDeAcesso(escala.pjesevento, user);
+
+    if (
+      escala.pjesevento.statusEvento === 'HOMOLOGADA' &&
+      user.typeUser !== 10
+    ) {
+      throw new BadRequestException(
+        'Evento homologado. Não é possível alterar observação.',
+      );
+    }
+
+    escala.obs = dto.obs;
+    escala.userIdObs = user.id;
+    escala.updatedObsAt = new Date();
+
+    const updated = await this.pjesEscalaRepository.save(escala);
+
+    return new ReturnPjesEscalaDto(updated);
+  }
+
   async remove(id: number, user: LoginPayload): Promise<void> {
     const escala = await this.pjesEscalaRepository.findOne({
       where: { id },
@@ -369,6 +528,14 @@ export class PjesEscalaService {
 
     if (!evento) {
       throw new NotFoundException('Evento não encontrado');
+    }
+
+    this.verificarPermissaoDeAcesso(evento, user);
+
+    if (evento.statusEvento === 'HOMOLOGADA' && user.typeUser !== 10) {
+      throw new BadRequestException(
+        'Evento homologado. Voce não pode excluir esse registro.',
+      );
     }
 
     /*VERIFICAÇÃO SE O USER LOGADO É O MESMO PARA O QUAL FOI DESTINADO O EVENTO */

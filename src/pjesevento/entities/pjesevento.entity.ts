@@ -1,3 +1,4 @@
+import { OmeEntity } from 'src/ome/entities/ome.entity';
 import { PjesDistEntity } from 'src/pjesdist/entities/pjesdist.entity';
 import { PjesOperacaoEntity } from 'src/pjesoperacao/entities/pjesoperacao.entity';
 import { StatusEventoEnum } from 'src/utils/status-evento.enum';
@@ -42,7 +43,7 @@ export class PjesEventoEntity {
     name: 'statusevento',
     type: 'enum',
     enum: StatusEventoEnum,
-    default: StatusEventoEnum.PENDENTE,
+    default: StatusEventoEnum.AUTORIZADA,
   })
   statusEvento: StatusEventoEnum;
 
@@ -67,4 +68,8 @@ export class PjesEventoEntity {
     (pjesoperacao) => pjesoperacao.pjesevento,
   )
   pjesoperacoes?: PjesOperacaoEntity[];
+
+  @ManyToOne(() => OmeEntity)
+  @JoinColumn({ name: 'omeid', referencedColumnName: 'id' })
+  ome: OmeEntity;
 }

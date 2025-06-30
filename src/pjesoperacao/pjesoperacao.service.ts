@@ -7,6 +7,7 @@ import { ReturnPjesOperacaoDto } from './dtos/return-pjesoperacao.dto';
 import { BadRequestException } from '@nestjs/common';
 import { PjesEventoEntity } from 'src/pjesevento/entities/pjesevento.entity';
 import { LoginPayload } from 'src/auth/dtos/loginPayload.dto';
+import { UpdateStatusPjesOperacaoDto } from './dtos/update-status-pjesoperacao.dto';
 
 @Injectable()
 export class PjesOperacaoService {
@@ -65,12 +66,19 @@ export class PjesOperacaoService {
       codVerba: evento.codVerba,
     });
     const saved = await this.pjesOperacaoRepository.save(entity);
-    return new ReturnPjesOperacaoDto(saved);
+
+    // Recarrega com relação `ome` incluída
+    const withRelations = await this.pjesOperacaoRepository.findOne({
+      where: { id: saved.id },
+      relations: ['ome'],
+    });
+
+    return new ReturnPjesOperacaoDto(withRelations);
   }
 
   async findAll(): Promise<ReturnPjesOperacaoDto[]> {
     const operations = await this.pjesOperacaoRepository.find({
-      relations: ['pjesevento', 'pjesescalas'],
+      relations: ['ome', 'pjesevento', 'pjesescalas'],
     });
     return operations.map((op) => new ReturnPjesOperacaoDto(op));
   }
@@ -107,6 +115,38 @@ export class PjesOperacaoService {
     }
 
     await this.pjesOperacaoRepository.remove(operation);
+  }
+
+  async updateStatusOperacao(
+    id: number,
+    dto: UpdateStatusPjesOperacaoDto,
+    user: LoginPayload,
+  ): Promise<ReturnPjesOperacaoDto> {
+    const operacao = await this.pjesOperacaoRepository.findOne({
+      where: { id },
+      relations: ['pjesevento', 'ome'],
+    });
+
+    if (!operacao) {
+      throw new NotFoundException('Operacao não encontrado');
+    }
+
+    const evento = operacao.pjesevento;
+
+    if (!evento) {
+      throw new NotFoundException('Distribuição do evento não encontrada');
+    }
+
+    if (evento.statusEvento === 'HOMOLOGADA' && user.typeUser !== 10) {
+      throw new BadRequestException(
+        'Operacao pertencente a um evento homologado. Alteração não permitida.',
+      );
+    }
+
+    operacao.statusOperacao = dto.statusOperacao;
+    const saved = await this.pjesOperacaoRepository.save(operacao);
+
+    return new ReturnPjesOperacaoDto(saved);
   }
 
   async update(
@@ -202,6 +242,13 @@ export class PjesOperacaoService {
 
     const updated = this.pjesOperacaoRepository.merge(existing, dto);
     const saved = await this.pjesOperacaoRepository.save(updated);
-    return new ReturnPjesOperacaoDto(saved);
+    //return new ReturnPjesOperacaoDto(saved);
+    // Recarrega com relação `ome` incluída
+    const withRelations = await this.pjesOperacaoRepository.findOne({
+      where: { id: saved.id },
+      relations: ['ome'],
+    });
+
+    return new ReturnPjesOperacaoDto(withRelations);
   }
 }

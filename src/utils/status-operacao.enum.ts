@@ -1,5 +1,4 @@
 export enum StatusOperacaoEnum {
-  PENDENTE = 'PENDENTE',
-  REALIZADA = 'REALIZADA',
+  AUTORIZADA = 'AUTORIZADA',
   HOMOLOGADA = 'HOMOLOGADA',
 }
