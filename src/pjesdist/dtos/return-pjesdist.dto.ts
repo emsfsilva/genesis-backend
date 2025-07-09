@@ -17,11 +17,16 @@ export class ReturnPjesDistDto {
   createdAt: Date;
   updatedAt: Date;
 
-  eventos?: ReturnPjesEventoDto[];
-  totalOfDistribuido: number;
-  totalPrcDistribuido: number;
-
   nomeDiretoria: string;
+
+  eventos?: ReturnPjesEventoDto[];
+
+  ttCotaOfEscala = 0;
+  ttCotaPrcEscala = 0;
+  ttCotaOfSaldo = 0;
+  ttCotaPrcSaldo = 0;
+  ttPmsImpedidos = 0;
+  ttEventosAutorizados = 0;
 
   constructor(dist: PjesDistEntity) {
     this.id = dist.id;
@@ -38,22 +43,39 @@ export class ReturnPjesDistDto {
     this.createdAt = dist.createdAt;
     this.updatedAt = dist.updatedAt;
 
+    this.nomeDiretoria = dist.diretoria?.nomeDiretoria ?? '';
 
-    this.nomeDiretoria = dist.diretoria?.nomeDiretoria;
-
-    if (Array.isArray(dist.pjeseventos) && dist.pjeseventos.length > 0) {
+    if (Array.isArray(dist.pjeseventos)) {
       this.eventos = dist.pjeseventos.map((ev) => new ReturnPjesEventoDto(ev));
-      this.totalOfDistribuido = dist.pjeseventos.reduce(
-        (sum, ev) => sum + ev.ttCtOfEvento,
-        0,
-      );
-      this.totalPrcDistribuido = dist.pjeseventos.reduce(
-        (sum, ev) => sum + ev.ttCtPrcEvento,
-        0,
-      );
-    } else {
-      this.totalOfDistribuido = 0;
-      this.totalPrcDistribuido = 0;
+
+      for (const ev of dist.pjeseventos) {
+        // Contador de eventos autorizados
+        if (ev.statusEvento === 'AUTORIZADA') {
+          this.ttEventosAutorizados++;
+        }
+
+        for (const op of ev.pjesoperacoes ?? []) {
+          for (const escala of op.pjesescalas ?? []) {
+            // Contador de impedidos (checando se começa com "IMPEDIDO")
+            if (escala.situacaoSgp?.toUpperCase().startsWith('IMPEDIDO -')) {
+              this.ttPmsImpedidos++;
+            }
+
+            // Cálculo da escala autorizada
+            if (escala.statusEscala === 'AUTORIZADA') {
+              if (escala.tipoSgp === 'O') {
+                this.ttCotaOfEscala += escala.ttCota ?? 0;
+              } else if (escala.tipoSgp === 'P') {
+                this.ttCotaPrcEscala += escala.ttCota ?? 0;
+              }
+            }
+          }
+        }
+      }
     }
+
+    // Calcula os saldos:
+    this.ttCotaOfSaldo = this.ttCtOfDist - this.ttCotaOfEscala;
+    this.ttCotaPrcSaldo = this.ttCtPrcDist - this.ttCotaPrcEscala;
   }
 }

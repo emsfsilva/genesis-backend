@@ -2,6 +2,7 @@ import { UserEntity } from '../entities/user.entity';
 import { UserType } from '../enum/user-type.enum';
 
 export const userEntityMock: UserEntity = {
+  imagemUrl: '',
   pg: 'Cb',
   mat: 1157590,
   nomeGuerra: 'Francisco',

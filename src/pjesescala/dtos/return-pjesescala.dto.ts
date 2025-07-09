@@ -41,7 +41,7 @@ export class ReturnPjesEscalaDto {
     pg: string;
     nomeGuerra: string;
     ome: {
-      nomeOMe: string;
+      nomeOme: string;
     };
   };
 
@@ -94,7 +94,7 @@ export class ReturnPjesEscalaDto {
         pg: entity.userObs.pg,
         nomeGuerra: entity.userObs.nomeGuerra,
         ome: {
-          nomeOMe: entity.userObs.ome?.nomeOme ?? null,
+          nomeOme: entity.userObs.ome?.nomeOme ?? null,
         },
       };
     }

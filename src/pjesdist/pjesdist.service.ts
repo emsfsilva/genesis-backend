@@ -31,10 +31,32 @@ export class PjesDistService {
         mes: data.mes,
         ano: data.ano,
       },
+      relations: ['pjesdists'], // você pode incluir isso se quiser somar as distribuições existentes
     });
 
     if (!teto) {
-      throw new BadRequestException(`É nescessário escolher um tipo de Verba`);
+      throw new BadRequestException(`É necessário escolher um tipo de Verba`);
+    }
+
+    // Soma as distribuições já existentes (caso queira considerar isso)
+    const totalOficiaisDistribuidos =
+      teto.pjesdists?.reduce((sum, d) => sum + d.ttCtOfDist, 0) ?? 0;
+    const totalPracasDistribuidos =
+      teto.pjesdists?.reduce((sum, d) => sum + d.ttCtPrcDist, 0) ?? 0;
+
+    const novaSomaOf = totalOficiaisDistribuidos + data.ttCtOfDist;
+    const novaSomaPrc = totalPracasDistribuidos + data.ttCtPrcDist;
+
+    if (novaSomaOf > teto.tetoOf) {
+      throw new BadRequestException(
+        `Distribuição inválida: cotas de oficiais excedem o teto permitido (${novaSomaOf} > ${teto.tetoOf})`,
+      );
+    }
+
+    if (novaSomaPrc > teto.tetoPrc) {
+      throw new BadRequestException(
+        `Distribuição inválida: cotas de praças excedem o teto permitido (${novaSomaPrc} > ${teto.tetoPrc})`,
+      );
     }
 
     const dist = this.pjesDistRepository.create({
@@ -59,20 +81,64 @@ export class PjesDistService {
   ): Promise<ReturnPjesDistDto> {
     const existing = await this.pjesDistRepository.findOne({
       where: { id },
-      relations: ['pjeseventos'],
+      relations: ['pjeseventos', 'pjesteto'],
     });
 
     if (!existing) {
       throw new NotFoundException('Distribuição não encontrada');
     }
 
-    // ✅ Impede troca de teto
     if (data.pjesTetoId && data.pjesTetoId !== existing.pjesTetoId) {
       throw new BadRequestException(
-        'Não é permitido alterar o tipo da verba ja criada.',
+        'Não é permitido alterar o tipo da verba já criada.',
       );
     }
 
+    const teto = await this.pjesTetoRepository.findOne({
+      where: { id: existing.pjesTetoId },
+      relations: ['pjesdists'],
+    });
+
+    if (!teto) {
+      throw new NotFoundException('Teto vinculado não encontrado');
+    }
+
+    // Soma todas as distribuições do teto, exceto a atual
+    const outrasDistribuicoes = (teto.pjesdists || []).filter(
+      (d) => d.id !== id,
+    );
+
+    const totalOficiaisDistribuidos = outrasDistribuicoes.reduce(
+      (sum, d) => sum + d.ttCtOfDist,
+      0,
+    );
+
+    const totalPracasDistribuidos = outrasDistribuicoes.reduce(
+      (sum, d) => sum + d.ttCtPrcDist,
+      0,
+    );
+
+    const novaOfDist =
+      data.ttCtOfDist !== undefined ? data.ttCtOfDist : existing.ttCtOfDist;
+    const novaPrcDist =
+      data.ttCtPrcDist !== undefined ? data.ttCtPrcDist : existing.ttCtPrcDist;
+
+    const novaSomaOf = totalOficiaisDistribuidos + novaOfDist;
+    const novaSomaPrc = totalPracasDistribuidos + novaPrcDist;
+
+    if (novaSomaOf > teto.tetoOf) {
+      throw new BadRequestException(
+        `Atualização inválida: cotas de oficiais excedem o teto (${novaSomaOf} > ${teto.tetoOf})`,
+      );
+    }
+
+    if (novaSomaPrc > teto.tetoPrc) {
+      throw new BadRequestException(
+        `Atualização inválida: cotas de praças excedem o teto (${novaSomaPrc} > ${teto.tetoPrc})`,
+      );
+    }
+
+    // Impede valores menores do que já foi distribuído em eventos
     const totalOfDistribuido =
       existing.pjeseventos?.reduce((sum, ev) => sum + ev.ttCtOfEvento, 0) ?? 0;
 
@@ -94,7 +160,6 @@ export class PjesDistService {
       );
     }
 
-    // 🔒 Remove pjesTetoId para garantir que não será alterado
     delete data.pjesTetoId;
 
     const updated = this.pjesDistRepository.merge(existing, data);
@@ -108,14 +173,29 @@ export class PjesDistService {
     return new ReturnPjesDistDto(full);
   }
 
-  async findAll(): Promise<ReturnPjesDistDto[]> {
+  /*
+  async findAll(mes?: number, ano?: number): Promise<ReturnPjesDistDto[]> {
+    const where: any = {};
+    if (mes) where.mes = mes;
+    if (ano) where.ano = ano;
+
     const dists = await this.pjesDistRepository.find({
-      relations: ['pjeseventos', 'diretoria'],
+      where,
+      relations: [
+        'pjeseventos.pjesoperacoes.pjesescalas',
+        'diretoria',
+        'pjeseventos.ome',
+      ],
+
+      order: {
+        ano: 'DESC',
+        mes: 'DESC',
+      },
     });
 
     return dists.map((dist) => new ReturnPjesDistDto(dist));
   }
-
+  
   async findOne(id: number): Promise<ReturnPjesDistDto> {
     const dist = await this.pjesDistRepository.findOne({
       where: { id },
@@ -124,6 +204,58 @@ export class PjesDistService {
 
     if (!dist) {
       throw new NotFoundException('Distribuição não encontrada');
+    }
+
+    return new ReturnPjesDistDto(dist);
+  }
+
+  */
+
+  async findAll(
+    user: LoginPayload,
+    mes?: number,
+    ano?: number,
+  ): Promise<ReturnPjesDistDto[]> {
+    const where: any = {};
+    if (mes) where.mes = mes;
+    if (ano) where.ano = ano;
+
+    // Aplica filtro por diretoriaId se não for Master (10) ou Tecnico (5)
+    if (![5, 10].includes(user.typeUser)) {
+      where.diretoriaId = user.ome.diretoriaId;
+    }
+
+    const dists = await this.pjesDistRepository.find({
+      where,
+      relations: [
+        'pjeseventos.pjesoperacoes.pjesescalas',
+        'diretoria',
+        'pjeseventos.ome',
+      ],
+      order: {
+        ano: 'DESC',
+        mes: 'DESC',
+      },
+    });
+
+    return dists.map((dist) => new ReturnPjesDistDto(dist));
+  }
+
+  async findOne(id: number, user: LoginPayload): Promise<ReturnPjesDistDto> {
+    const dist = await this.pjesDistRepository.findOne({
+      where: { id },
+      relations: ['pjeseventos', 'diretoria'],
+    });
+
+    if (!dist) {
+      throw new NotFoundException('Distribuição não encontrada');
+    }
+    // Aplica filtro por diretoriaId se não for Master (10) ou Tecnico (5)
+    if (![5, 10].includes(user.typeUser)) {
+      const userDiretoriaId = user.ome?.diretoriaId;
+      if (dist.diretoriaId !== userDiretoriaId) {
+        throw new BadRequestException('Acesso negado a esta distribuição.');
+      }
     }
 
     return new ReturnPjesDistDto(dist);

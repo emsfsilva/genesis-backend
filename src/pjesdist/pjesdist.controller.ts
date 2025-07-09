@@ -8,6 +8,7 @@ import {
   Delete,
   ParseIntPipe,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { PjesDistService } from './pjesdist.service';
 import { CreatePjesDistDto } from './dtos/create-pjesdist.dto';
@@ -21,7 +22,7 @@ import { LoginPayload } from 'src/auth/dtos/loginPayload.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('pjesdist')
-@Roles(UserType.Master, UserType.Auxiliar)
+@Roles(UserType.Master, UserType.Auxiliar, UserType.Diretor)
 export class PjesDistController {
   constructor(private readonly pjesDistService: PjesDistService) {}
 
@@ -33,9 +34,13 @@ export class PjesDistController {
     return this.pjesDistService.create(data, user);
   }
 
+  /*
   @Get()
-  async findAll(): Promise<ReturnPjesDistDto[]> {
-    return this.pjesDistService.findAll();
+  async findAll(
+    @Query('mes') mes?: number,
+    @Query('ano') ano?: number,
+  ): Promise<ReturnPjesDistDto[]> {
+    return this.pjesDistService.findAll(mes, ano);
   }
 
   @Get(':id')
@@ -43,6 +48,25 @@ export class PjesDistController {
     @Param('id', ParseIntPipe) id: number,
   ): Promise<ReturnPjesDistDto> {
     return this.pjesDistService.findOne(id);
+  }
+
+  */
+
+  @Get()
+  async findAll(
+    @User() user: LoginPayload,
+    @Query('mes') mes?: number,
+    @Query('ano') ano?: number,
+  ): Promise<ReturnPjesDistDto[]> {
+    return this.pjesDistService.findAll(user, mes, ano);
+  }
+
+  @Get(':id')
+  async findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @User() user: LoginPayload,
+  ): Promise<ReturnPjesDistDto> {
+    return this.pjesDistService.findOne(id, user);
   }
 
   @Put(':id')

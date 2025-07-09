@@ -9,6 +9,8 @@ export class ReturnDadosSgpDto {
   nunvincSgp: number;
   localApresentacaoSgp: string;
   situacaoSgp: string;
+  mesSgp: number;
+  anoSgp: number;
 
   constructor(entity: Partial<ReturnDadosSgpDto>) {
     Object.assign(this, entity);

@@ -6,12 +6,20 @@ import {
   Param,
   Post,
   Put,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import { CreatePjesTetoDto } from './dtos/create-pjesteto.dto';
 import { ReturnPjesTetoDto } from './dtos/return-pjesteto.dto';
 import { PjesTetoService } from './pjesteto.service';
+import { RolesGuard } from 'src/guards/roles.guard';
+import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { UserType } from 'src/user/enum/user-type.enum';
+import { Roles } from 'src/decorators/roles.decorator';
 
 @Controller('pjesteto')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserType.Master, UserType.Auxiliar, UserType.Diretor)
 export class PjesTetoController {
   constructor(private readonly pjestetoService: PjesTetoService) {}
 
@@ -21,8 +29,11 @@ export class PjesTetoController {
   }
 
   @Get()
-  async findAll(): Promise<ReturnPjesTetoDto[]> {
-    return this.pjestetoService.findAll();
+  async findAll(
+    @Query('ano') ano?: number,
+    @Query('mes') mes?: number,
+  ): Promise<ReturnPjesTetoDto[]> {
+    return this.pjestetoService.findAll(ano, mes);
   }
 
   @Get(':id')

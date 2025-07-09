@@ -21,12 +21,31 @@ export class ReturnPjesEventoDto {
   somaCtPrcOper?: number;
   somaCotaOfEscala?: number;
   somaCotaPrcEscala?: number;
+  totalImpedidos?: number;
+
+  //parte de cima da resumo
+  somattCtOfEvento: number;
+  somattCotaOfEscala: number;
+
+  somattCtPrcEvento: number;
+  somattCotaPrcEscala: number;
+
+  //parte de baixo da resumo
+
+  valorCtOfEvento?: number;
+  valorSomaGeralCotaOfEscala?: number;
+  valorCtPrcEvento?: number;
+  valorSomaGeralCotaPrcEscala?: number;
+  valorTtPlanejado?: number;
+  valorTtExecutado?: number;
+  saldoFinal?: number;
 
   // Dados derivados
   mes?: number;
   ano?: number;
 
   nomeOme?: string;
+  nomeDiretoria?: string;
 
   createdAt: Date;
   updatedAt: Date;
@@ -47,6 +66,7 @@ export class ReturnPjesEventoDto {
     this.updatedAt = entity.updatedAt;
     this.pjesdist = entity.pjesdist;
     this.nomeOme = entity.ome?.nomeOme;
+    this.nomeDiretoria = entity.pjesdist?.diretoria?.nomeDiretoria;
     this.pjesoperacoes = entity.pjesoperacoes;
 
     // Soma cotas de operações
@@ -60,9 +80,10 @@ export class ReturnPjesEventoDto {
       0,
     );
 
-    // ✅ Soma real de cotas por tipo de escala:
+    // Soma real de cotas por tipo de escala
     let totalOf = 0;
     let totalPrc = 0;
+    let totalImpedidos = 0;
 
     for (const operacao of entity.pjesoperacoes || []) {
       for (const escala of operacao.pjesescalas || []) {
@@ -71,10 +92,37 @@ export class ReturnPjesEventoDto {
         } else if (escala.tipoSgp === 'P') {
           totalPrc += escala.ttCota || 0;
         }
+
+        // Contagem de impedidos
+        if (
+          escala.situacaoSgp &&
+          escala.situacaoSgp.toUpperCase().startsWith('IMPEDIDO -')
+        ) {
+          totalImpedidos += 1;
+        }
       }
     }
 
     this.somaCotaOfEscala = totalOf;
     this.somaCotaPrcEscala = totalPrc;
+    this.totalImpedidos = totalImpedidos;
+
+    this.valorCtOfEvento = this.ttCtOfEvento * 300;
+    this.valorSomaGeralCotaOfEscala = this.somaCotaOfEscala * 300;
+
+    this.valorCtPrcEvento = this.ttCtPrcEvento * 200;
+    this.valorSomaGeralCotaPrcEscala = this.somaCotaPrcEscala * 200;
+
+    //Parte de cima do resumo
+    this.somattCtOfEvento = this.ttCtOfEvento;
+    this.somattCotaOfEscala = this.somaCotaOfEscala;
+    this.somattCtPrcEvento = this.ttCtPrcEvento;
+    this.somattCotaPrcEscala = this.somaCotaPrcEscala;
+
+    //Parte de baixo do resumo
+    this.valorTtPlanejado = this.valorCtOfEvento + this.valorCtPrcEvento;
+    this.valorTtExecutado =
+      this.valorSomaGeralCotaOfEscala + this.valorSomaGeralCotaPrcEscala;
+    this.saldoFinal = this.valorTtPlanejado - this.valorTtExecutado;
   }
 }

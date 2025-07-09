@@ -8,6 +8,7 @@ import {
   Put,
   ParseIntPipe,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { PjesEventoService } from './pjesevento.service';
 import { ReturnPjesEventoDto } from './dtos/return-pjesevento.dto';
@@ -22,7 +23,7 @@ import { UpdateStatusPjesEventoDto } from './dtos/update-status-pjesevento.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('pjesevento')
-@Roles(UserType.Master, UserType.Auxiliar)
+@Roles(UserType.Master, UserType.Auxiliar, UserType.Diretor)
 export class PjesEventoController {
   constructor(private readonly pjeseventoService: PjesEventoService) {}
 
@@ -35,8 +36,46 @@ export class PjesEventoController {
   }
 
   @Get()
-  async findAll(): Promise<ReturnPjesEventoDto[]> {
-    return this.pjeseventoService.findAll();
+  async findAll(
+    @Query('mes') mes?: number,
+    @Query('ano') ano?: number,
+    @User() user?: LoginPayload,
+  ): Promise<ReturnPjesEventoDto[]> {
+    return this.pjeseventoService.findAll(mes, ano, user);
+  }
+
+  /*
+  @Get('resumo-por-diretoria')
+  async findAllResumoPorDiretoria(
+    @Query('mes') mes?: number,
+    @Query('ano') ano?: number,
+    @Query('omeMin') omeMin?: number,
+    @Query('omeMax') omeMax?: number,
+  ): Promise<ReturnPjesEventoDto[]> {
+    return this.pjeseventoService.findAllResumoPorDiretoria(
+      mes,
+      ano,
+      Number(omeMin),
+      Number(omeMax),
+    );
+  }
+    */
+
+  @Get('resumo-por-diretoria')
+  async findAllResumoPorDiretoria(
+    @Query('mes') mes?: number,
+    @Query('ano') ano?: number,
+    @Query('omeMin') omeMin?: number,
+    @Query('omeMax') omeMax?: number,
+    @User() user?: LoginPayload,
+  ): Promise<any> {
+    return this.pjeseventoService.findAllResumoPorDiretoria(
+      mes,
+      ano,
+      Number(omeMin),
+      Number(omeMax),
+      user,
+    );
   }
 
   @Get(':id')

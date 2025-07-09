@@ -23,6 +23,9 @@ export class UserEntity {
   @PrimaryGeneratedColumn('rowid')
   id: number;
 
+  @Column({ name: 'imagem_url', nullable: true })
+  imagemUrl: string;
+
   @Column({ name: 'loginsei', nullable: false })
   loginSei: string;
 
@@ -78,7 +81,7 @@ export class UserEntity {
   @OneToOne(() => AuxiliarEntity, (auxiliar) => auxiliar.user)
   auxiliar?: AuxiliarEntity;
 
-  @ManyToOne(() => OmeEntity, (ome) => ome.users, { eager: true })
-  @JoinColumn({ name: 'omeid' })
+  @ManyToOne(() => OmeEntity, (ome) => ome.users)
+  @JoinColumn({ name: 'omeid', referencedColumnName: 'id' })
   ome?: OmeEntity;
 }

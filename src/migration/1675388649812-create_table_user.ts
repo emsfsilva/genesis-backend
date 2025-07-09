@@ -5,6 +5,7 @@ export class createTableUser1675388649812 implements MigrationInterface {
     await queryRunner.query(`
       CREATE TABLE public.user (
         id integer NOT NULL,
+        imagem_url varying,
         loginsei character varying NOT NULL,
         email character varying NOT NULL,
         password character varying NOT NULL,

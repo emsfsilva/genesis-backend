@@ -13,7 +13,9 @@ export class createTableDadosSgp1675770516772 implements MigrationInterface {
         nunfuncsgp INTEGER NOT NULL,
         nunvincsgp INTEGER NOT NULL,
         localapresentacaosgp VARCHAR NOT NULL,
-        situacaosgp VARCHAR NOT NULL
+        situacaosgp VARCHAR NOT NULL,
+        messgp INTEGER NOT NULL,
+        anosgp INTEGER NOT NULL
       );
     `);
   }

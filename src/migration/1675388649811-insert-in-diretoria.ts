@@ -3,22 +3,22 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 export class insertInDiretoria1675388649811 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
-      INSERT INTO public."diretoria" (nomediretoria, dpoid)
+      INSERT INTO public."diretoria" ("id", "nomediretoria", "dpoid")
       VALUES 
-        ('DPO', 1),
-        ('DIM', 1),
-        ('DIRESP', 1),
-        ('DINTER I', 1),
-        ('DINTER II', 1),
-        ('QCG', 1),
-        ('OE', 1),
-        ('DASDH', 1),
-        ('MPPE', 1),
-        ('TJPE', 1),
-        ('CAMIL', 1),
-        ('FEDERAL', 1),
-        ('TIBRT', 1),
-        ('TREPE', 1);
+        (1,'DPO', 1),
+        (2,'DIM', 1),
+        (3,'DIRESP', 1),
+        (4,'DINTER I', 1),
+        (5,'DINTER II', 1),
+        (6,'QCG', 1),
+        (7,'OE', 1),
+        (8,'DASDH', 1),
+        (9,'MPPE', 1),
+        (10,'TJPE', 1),
+        (11,'CAMIL', 1),
+        (12,'FEDERAL', 1),
+        (13,'TIBRT', 1),
+        (14,'TREPE', 1);
     `);
   }
 

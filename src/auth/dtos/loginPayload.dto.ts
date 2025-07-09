@@ -4,6 +4,7 @@ import { UserEntity } from '../../user/entities/user.entity';
 //Esses são os dados do TOKEN
 export class LoginPayload {
   id: number;
+  imagemUrl: string;
   loginSei: string;
   email: string;
   phone: string;
@@ -18,6 +19,7 @@ export class LoginPayload {
 
   constructor(user: UserEntity) {
     this.id = user.id;
+    this.imagemUrl = user.imagemUrl;
     this.loginSei = user.loginSei;
     this.email = user.email;
     this.phone = user.phone;

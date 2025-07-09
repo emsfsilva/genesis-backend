@@ -11,6 +11,7 @@ import { PjesOperacaoEntity } from 'src/pjesoperacao/entities/pjesoperacao.entit
 import { AuthModule } from 'src/auth/auth.module';
 import { OmeEntity } from 'src/ome/entities/ome.entity';
 import { OmeModule } from 'src/ome/ome.module';
+import { prestarContaController } from './prestarContaController';
 
 @Module({
   imports: [
@@ -26,7 +27,7 @@ import { OmeModule } from 'src/ome/ome.module';
     AuthModule,
     OmeModule,
   ],
-  controllers: [PjesEscalaController],
+  controllers: [PjesEscalaController, prestarContaController],
   providers: [PjesEscalaService],
 })
 export class PjesescalaModule {}

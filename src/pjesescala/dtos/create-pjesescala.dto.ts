@@ -57,7 +57,7 @@ export class CreatePjesEscalaDto {
   @IsNotEmpty()
   situacaoSgp: string;
 
-  @IsString()
+  @IsDateString()
   dataInicio: string;
 
   @IsDateString()

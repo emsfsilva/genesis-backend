@@ -9,7 +9,9 @@ import {
   ParseIntPipe,
   UseGuards,
   Query,
-  Patch,
+  Res,
+  Req,
+  BadRequestException,
 } from '@nestjs/common';
 import { PjesEscalaService } from './pjesescala.service';
 import { CreatePjesEscalaDto } from './dtos/create-pjesescala.dto';
@@ -23,10 +25,12 @@ import { Roles } from 'src/decorators/roles.decorator';
 import { UserType } from 'src/user/enum/user-type.enum';
 import { UpdateStatusPjesEscalaDto } from './dtos/update-status-pjesescala.dto';
 import { UpdateObsPjesEscalaDto } from './dtos/update-obs-pjesescala.dto';
+import { Request, Response } from 'express';
+import { FiltroExcelDto } from './dtos/filtro-excel.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('pjesescala')
-@Roles(UserType.Master, UserType.Auxiliar)
+@Roles(UserType.Master, UserType.Diretor, UserType.Auxiliar)
 export class PjesEscalaController {
   constructor(private readonly service: PjesEscalaService) {}
 
@@ -109,5 +113,31 @@ export class PjesEscalaController {
     @User() user: LoginPayload,
   ): Promise<void> {
     return this.service.remove(id, user);
+  }
+
+  @Get('exportar')
+  //@Roles(UserType.Master, UserType.Auxiliar)
+  async exportarEscala(
+    @Query('mes', ParseIntPipe) mes: number,
+    @Query('ano', ParseIntPipe) ano: number,
+    @User() user: LoginPayload,
+    @Res() res: Response,
+  ) {
+    return this.service.exportarParaExcel(mes, ano, user, res);
+  }
+
+  @Get('excel')
+  async gerarExcel(
+    @Query('mes', ParseIntPipe) mes: number,
+    @Query('ano', ParseIntPipe) ano: number,
+    @Res() res: Response,
+  ) {
+    console.log('mes:', mes, 'ano:', ano);
+    return this.service.gerarExcel(mes, ano, null, res);
+  }
+  @Get('teste')
+  teste(@Query('mes') mes: string, @Query('ano') ano: string) {
+    console.log('mes:', mes, 'ano:', ano);
+    return { mes, ano };
   }
 }

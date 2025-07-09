@@ -26,9 +26,15 @@ export class DadosSgpEntity {
   @Column({ name: 'nunvincsgp', type: 'int' })
   nunvincSgp: number;
 
-  @Column({ name: 'localapresentacaosgp', type: 'varchar', length: 1 })
+  @Column({ name: 'localapresentacaosgp', type: 'varchar' })
   localApresentacaoSgp: string;
 
   @Column({ name: 'situacaosgp', type: 'varchar' })
   situacaoSgp: string;
+
+  @Column({ name: 'messgp', type: 'int' })
+  mesSgp: number;
+
+  @Column({ name: 'anosgp', type: 'int' })
+  anoSgp: number;
 }

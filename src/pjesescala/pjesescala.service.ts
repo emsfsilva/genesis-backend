@@ -16,6 +16,9 @@ import { DataSource } from 'typeorm';
 import { ReturnPjesEscalaDto } from './dtos/return-pjesescala.dto';
 import { UpdateStatusPjesEscalaDto } from './dtos/update-status-pjesescala.dto';
 import { UpdateObsPjesEscalaDto } from './dtos/update-obs-pjesescala.dto';
+import * as ExcelJS from 'exceljs';
+import * as fs from 'fs';
+import { Response } from 'express';
 
 @Injectable()
 export class PjesEscalaService {
@@ -155,7 +158,14 @@ export class PjesEscalaService {
 
       if (!operacao) throw new NotFoundException('Operação não encontrada');
 
-      const dataInicio = new Date(dto.dataInicio);
+      // Conversão segura da dataInicio, sem interferência de timezone
+      const [anoStr, mesStr, diaStr] = dto.dataInicio.split('-');
+      const dataInicio = new Date(
+        Number(anoStr),
+        Number(mesStr) - 1,
+        Number(diaStr),
+      );
+
       const mes = dataInicio.getMonth() + 1;
       const ano = dataInicio.getFullYear();
 
@@ -255,7 +265,9 @@ export class PjesEscalaService {
       .createQueryBuilder('escala')
       .leftJoinAndSelect('escala.pjesoperacao', 'pjesoperacao')
       .leftJoinAndSelect('escala.pjesevento', 'pjesevento')
-      .leftJoinAndSelect('pjesevento.pjesdist', 'pjesdist');
+      .leftJoinAndSelect('pjesevento.pjesdist', 'pjesdist')
+      .leftJoinAndSelect('escala.userObs', 'userObs') // <-- adicionado
+      .leftJoinAndSelect('userObs.ome', 'ome'); // <-- adicionado
 
     if (operacaoId) {
       query.andWhere('escala.pjesOperacaoId = :operacaoId', { operacaoId });
@@ -543,5 +555,451 @@ export class PjesEscalaService {
     this.verificarPermissaoDeAcesso(evento, user);
 
     await this.pjesEscalaRepository.delete(id);
+  }
+
+  async exportarParaExcel(
+    mes: number,
+    ano: number,
+    user: LoginPayload,
+    res: Response,
+  ): Promise<void> {
+    const query = this.pjesEscalaRepository
+      .createQueryBuilder('escala')
+      .leftJoin('escala.pjesoperacao', 'pjesoperacao') // JOIN com a operação
+      .leftJoin('pjesoperacao.ome', 'ome') // JOIN com a OME
+      .where('EXTRACT(MONTH FROM escala.dataInicio) = :mes', { mes })
+      .andWhere('EXTRACT(YEAR FROM escala.dataInicio) = :ano', { ano });
+
+    // 🔐 Restrição por OME se for auxiliar
+    if (user.typeUser === 1) {
+      query.andWhere('escala.omeId = :omeId', { omeId: user.omeId });
+    }
+
+    const dados = await query
+      .select([
+        'ome.nomeOme AS nomeome',
+        'escala.pgSgp AS escala_pgsgp',
+        'escala.matSgp AS escala_matsgp',
+        'escala.nomeCompletoSgp AS escala_nomecompletosgp',
+        'escala.omeSgp AS escala_omesgp',
+        'escala.tipoSgp AS escala_tiposgp',
+        'escala.nunfuncSgp AS escala_nunfuncsgp',
+        'escala.nunvincSgp AS escala_nunvincsgp',
+        'escala.dataInicio AS escala_datainicio',
+        'escala.dataFinal AS escala_datafinal',
+        'escala.codVerba AS escala_codverba',
+        'escala.ttCota AS escala_ttcota',
+      ])
+
+      .getRawMany();
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Escalas');
+
+    // Cabeçalho
+    worksheet.addRow([
+      'OME',
+      'pgSgp',
+      'matSgp',
+      'nomeCompletoSgp',
+      'omeSgp',
+      'tipoSgp',
+      'nunfuncSgp',
+      'nunvincSgp',
+      'dataInicio',
+      'dataFinal',
+      'codVerba',
+      'ttCota',
+    ]);
+
+    // Linhas
+    for (const d of dados) {
+      worksheet.addRow([
+        d.nomeOme,
+        d.escala_pgsgp,
+        d.escala_matsgp,
+        d.escala_nomecompletosgp,
+        d.escala_omesgp,
+        d.escala_tiposgp,
+        d.escala_nunfuncsgp,
+        d.escala_nunvincsgp,
+        new Date(d.escala_datainicio),
+        new Date(d.escala_datafinal),
+        d.escala_codverba,
+        d.escala_ttcota,
+      ]);
+    }
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=escala_${mes}_${ano}.xlsx`,
+    );
+
+    await workbook.xlsx.write(res);
+    res.end();
+  }
+
+  private nomeMes(mes: number): string {
+    const nomes = [
+      'JAN',
+      'FEV',
+      'MAR',
+      'ABR',
+      'MAI',
+      'JUN',
+      'JUL',
+      'AGO',
+      'SET',
+      'OUT',
+      'NOV',
+      'DEZ',
+    ];
+    return nomes[mes - 1] || '';
+  }
+
+  async gerarExcel(
+    mes: number,
+    ano: number,
+    user: LoginPayload,
+    res: Response,
+  ): Promise<void> {
+    const query = this.pjesEscalaRepository
+      .createQueryBuilder('escala')
+      .leftJoin('escala.pjesoperacao', 'pjesoperacao')
+      .leftJoin('pjesoperacao.ome', 'ome')
+      .where('EXTRACT(MONTH FROM escala.dataInicio) = :mes', { mes })
+      .andWhere('EXTRACT(YEAR FROM escala.dataInicio) = :ano', { ano });
+
+    // 🔐 Restrição por OME se for auxiliar
+    if (user.typeUser === 1) {
+      query.andWhere('escala.omeId = :omeId', { omeId: user.omeId });
+    }
+
+    const dados = await query
+      .select([
+        'ome.nomeOme AS nomeome',
+        'escala.pgSgp',
+        'escala.matSgp',
+        'escala.nomeCompletoSgp',
+        'escala.omeSgp',
+        'escala.tipoSgp',
+        'escala.nunfuncSgp',
+        'escala.nunvincSgp',
+        'escala.dataInicio',
+        'escala.dataFinal',
+        'escala.codVerba',
+        'escala.ttCota',
+      ])
+      .getRawMany();
+
+    const verbaMap = {
+      247: 'GOVERNO',
+      263: 'PATRULHA ESCOLAR',
+      255: 'CTM BRT',
+      251: 'ALEPE',
+      253: 'MPPE',
+      252: 'TJPE',
+      260: 'CAMIL',
+      250: 'FEDERAL',
+      999: 'OE',
+      266: 'TCE',
+      257: 'CPRH',
+    };
+
+    const resumo: Record<string, number> = {};
+
+    for (const item of dados) {
+      const cod = item.escala_codverba;
+      const tipo = item.escala_tiposgp;
+      const key = `${cod}_${tipo}`;
+      resumo[key] = (resumo[key] || 0) + (item.escala_ttcota ?? 0);
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Escalas');
+
+    // 🔻 Desabilita as linhas de grade
+    worksheet.views = [{ showGridLines: false }];
+
+    // Imagens
+    const imgPolicia = fs.readFileSync('src/assets/govpe.png');
+
+    worksheet.mergeCells('A2:R3');
+
+    const imageIdPolicia = workbook.addImage({
+      buffer: imgPolicia,
+      extension: 'png',
+    });
+
+    worksheet.addImage(imageIdPolicia, {
+      tl: { col: 9, row: 1 },
+      ext: { width: 150, height: 60 },
+    });
+
+    // Cabeçalho principal
+    worksheet.mergeCells('B5:R5');
+    worksheet.getCell('B5').value = `QUARTEL DO COMANDO GERAL`;
+    worksheet.getCell('B5').font = { bold: true, size: 14 };
+    worksheet.getCell('B5').alignment = { horizontal: 'center' };
+
+    worksheet.mergeCells('B6:R6');
+    worksheet.getCell('B6').value = `DIRETORIA DE PLANEJAMENTO OPERACIONAL`;
+    worksheet.getCell('B6').font = { bold: true, size: 14 };
+    worksheet.getCell('B6').alignment = { horizontal: 'center' };
+
+    worksheet.mergeCells('B7:R7');
+    const agora = new Date();
+    const dia = String(agora.getDate()).padStart(2, '0');
+    const mesNome = this.nomeMes(agora.getMonth() + 1);
+    const anoAtual = agora.getFullYear();
+    const hora = String(agora.getHours()).padStart(2, '0');
+    const minuto = String(agora.getMinutes()).padStart(2, '0');
+
+    worksheet.getCell(
+      'B7',
+    ).value = `Recife, ${dia} de ${mesNome} de ${anoAtual} às ${hora}h${minuto}`;
+    worksheet.getCell('B7').font = { bold: true, italic: true };
+    worksheet.getCell('B7').alignment = { horizontal: 'right' };
+
+    worksheet.getCell('B7').font = { bold: true, italic: true };
+    worksheet.getCell('B7').alignment = { horizontal: 'right' };
+
+    // 🔷 Título da Tabela de Resumo
+    worksheet.mergeCells('B8:R8');
+    worksheet.getCell(
+      'B8',
+    ).value = `ASSUNTO: PRESTAÇÃO DE CONTAS - ${this.nomeMes(mes)} - ${ano} - ${
+      user?.ome?.nomeOme ?? 'NOME DA OME'
+    }`;
+    worksheet.getCell('B8').font = { bold: true };
+    worksheet.getCell('B8').alignment = { horizontal: 'left' };
+
+    worksheet.mergeCells('B9:R9');
+    worksheet.getCell('B9').value = `Usuário gerador: ${user?.pg ?? ''} ${
+      user?.mat ?? ''
+    } ${user?.nomeGuerra ?? ''}`;
+    worksheet.getCell('B9').font = { italic: true, bold: true };
+    worksheet.getCell('B9').alignment = { horizontal: 'left' };
+
+    worksheet.getCell('G11').value = `PLANILHA DE PRESTAÇÃO DE COTAS PJES`;
+    worksheet.getCell('G11').font = { bold: true };
+    worksheet.getCell('G11').alignment = { horizontal: 'left' };
+
+    // 🔷 Título da Tabela de Resumo
+    worksheet.getCell('B11').value = 'RESUMO DO USO DAS COTAS';
+    worksheet.getCell('B11').font = { bold: true };
+    worksheet.getCell('B11').alignment = { horizontal: 'left' };
+
+    // 🔷 Cabeçalho da Tabela (linha 6)
+    const resumoHeaderRow = 12;
+    const resumoHeaders = ['COD', 'OPERAÇÃO', 'OFICIAIS', 'PRAÇAS'];
+
+    resumoHeaders.forEach((header, i) => {
+      const cell = worksheet.getCell(resumoHeaderRow, 2 + i); // colunas A, B, C, D
+      cell.value = header;
+      cell.font = { bold: true };
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'D9E1F2' },
+      };
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' },
+      };
+    });
+
+    // 🔷 Dados do resumo a partir da linha 7
+    let resumoRow = resumoHeaderRow + 1;
+    const verbaCodes = Object.keys(verbaMap).map(Number);
+
+    verbaCodes.forEach((codVerba, idx) => {
+      const values = [
+        codVerba,
+        verbaMap[codVerba],
+        resumo[`${codVerba}_O`] ?? 0,
+        resumo[`${codVerba}_P`] ?? 0,
+      ];
+
+      const isEven = idx % 2 === 0;
+
+      values.forEach((val, i) => {
+        const cell = worksheet.getCell(resumoRow, 2 + i); // colunas A, B, C, D
+
+        cell.value = val;
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: isEven ? 'FFFFFF' : 'F2F2F2' },
+        };
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'CCCCCC' } },
+          left: { style: 'thin', color: { argb: 'CCCCCC' } },
+          bottom: { style: 'thin', color: { argb: 'CCCCCC' } },
+          right: { style: 'thin', color: { argb: 'CCCCCC' } },
+        };
+      });
+
+      resumoRow++;
+    });
+
+    // Largura adequada das colunas A–D
+    worksheet.getColumn(2).width = 10; // codVerba
+    worksheet.getColumn(3).width = 25; // nomeVerba
+    worksheet.getColumn(4).width = 10; // Oficiais
+    worksheet.getColumn(5).width = 10; // Praças
+
+    // 🔹 Cabeçalho da tabela da direita (linha 6)
+    const startRow = 12;
+    const startCol = 7; // Coluna G
+
+    const headers = [
+      'UNIDADE',
+      'PG',
+      'MATRICULA',
+      'NOME COMPLETO',
+      'OME',
+      'TIPO',
+      'NUNFUNC',
+      'NUVINC',
+      'DATA INICIO',
+      'DATA FINAL',
+      'COD',
+      'COTA',
+    ];
+
+    // Cabeçalho na linha 6
+    headers.forEach((header, i) => {
+      const cell = worksheet.getCell(startRow, startCol + i);
+      cell.value = header;
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      cell.font = { bold: true };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'D9E1F2' },
+      };
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' },
+      };
+    });
+
+    // Largura personalizada das colunas da tabela da direita (colunas G → R)
+    worksheet.getColumn(7).width = 12; // OME
+    worksheet.getColumn(8).width = 6; // PG
+    worksheet.getColumn(9).width = 14; // MATRÍCULA
+    worksheet.getColumn(10).width = 40; // NOME COMPLETO
+    worksheet.getColumn(11).width = 12; // OME (militar)
+    worksheet.getColumn(12).width = 6; // TIPO
+    worksheet.getColumn(13).width = 14; // NUNFUNC
+    worksheet.getColumn(14).width = 8; // NUVINC
+    worksheet.getColumn(15).width = 12; // DATA INICIO
+    worksheet.getColumn(16).width = 12; // DATA FINAL
+    worksheet.getColumn(17).width = 6; // COD
+    worksheet.getColumn(18).width = 8; // COTA
+
+    // 🔹 Dados a partir da linha 7
+    dados.forEach((d, i) => {
+      const row = startRow + 1 + i; // linha 7 em diante
+      const isEven = i % 2 === 0;
+      const values = [
+        d.nomeome,
+        d.escala_pgsgp,
+        d.escala_matsgp,
+        d.escala_nomecompletosgp,
+        d.escala_omesgp,
+        d.escala_tiposgp,
+        d.escala_nunfuncsgp,
+        d.escala_nunvincsgp,
+        new Date(d.escala_datainicio),
+        new Date(d.escala_datafinal),
+        d.escala_codverba,
+        d.escala_ttcota,
+      ];
+
+      values.forEach((val, j) => {
+        const cell = worksheet.getCell(row, startCol + j);
+        cell.value = val;
+
+        // Datas com formatação
+        if (j === 8 || j === 9) {
+          cell.numFmt = 'dd/mm/yyyy';
+        }
+
+        // Centralizado
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+        // Zebra
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: isEven ? 'FFFFFF' : 'F2F2F2' },
+        };
+
+        // Bordas
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'CCCCCC' } },
+          left: { style: 'thin', color: { argb: 'CCCCCC' } },
+          bottom: { style: 'thin', color: { argb: 'CCCCCC' } },
+          right: { style: 'thin', color: { argb: 'CCCCCC' } },
+        };
+      });
+    });
+
+    const ultimaLinha = worksheet.lastRow.number;
+    const primeiraCol = 1; // Coluna A
+    const ultimaCol = 19; // Coluna S (A = 1, S = 19)
+
+    for (let col = primeiraCol; col <= ultimaCol; col++) {
+      // 🔹 Topo
+      worksheet.getCell(1, col).border = {
+        ...worksheet.getCell(1, col).border,
+        top: { style: 'thin' },
+      };
+
+      // 🔹 Base
+      worksheet.getCell(ultimaLinha, col).border = {
+        ...worksheet.getCell(ultimaLinha, col).border,
+        bottom: { style: 'thin' },
+      };
+    }
+
+    // 🔹 Laterais
+    for (let row = 1; row <= ultimaLinha; row++) {
+      // Esquerda (coluna A)
+      worksheet.getCell(row, primeiraCol).border = {
+        ...worksheet.getCell(row, primeiraCol).border,
+        left: { style: 'thin' },
+      };
+
+      // Direita (coluna S)
+      worksheet.getCell(row, ultimaCol).border = {
+        ...worksheet.getCell(row, ultimaCol).border,
+        right: { style: 'thin' },
+      };
+    }
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=escala_${mes}_${ano}.xlsx`,
+    );
+
+    await workbook.xlsx.write(res);
+    res.end();
   }
 }

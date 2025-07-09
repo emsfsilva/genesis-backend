@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import { PjesEventoEntity } from './entities/pjesevento.entity';
 import { ReturnPjesEventoDto } from './dtos/return-pjesevento.dto';
 import { CreatePjesEventoDto } from './dtos/create-pjesevento.dto';
@@ -85,12 +85,222 @@ export class PjesEventoService {
     return new ReturnPjesEventoDto(withRelations);
   }
 
-  async findAll(): Promise<ReturnPjesEventoDto[]> {
-    const eventos = await this.pjeseventoRepository.find({
-      relations: ['ome', 'ome.diretoria', 'pjesoperacoes.pjesescalas'],
+  async findAll(
+    mes?: number,
+    ano?: number,
+    user?: LoginPayload,
+  ): Promise<ReturnPjesEventoDto[]> {
+    const where: any = {};
+
+    if (mes) {
+      where.pjesdist = { mes };
+    }
+
+    if (ano) {
+      where.pjesdist = { ...where.pjesdist, ano };
+    }
+
+    const items = await this.pjeseventoRepository.find({
+      where,
+      relations: [
+        'ome',
+        'ome.diretoria',
+        'pjesoperacoes.pjesescalas',
+        'pjesdist',
+        'pjesdist.diretoria',
+      ],
     });
 
-    return eventos.map((evento) => new ReturnPjesEventoDto(evento));
+    let filtrados = items;
+
+    if (user?.typeUser === 1) {
+      // Apenas eventos da OME do usuário
+      filtrados = items.filter((evento) => evento.omeId === user.omeId);
+    } else if (user?.typeUser === 3) {
+      filtrados = items.filter((evento) => {
+        if (evento.codVerba !== 247) {
+          return evento.pjesdist?.diretoriaId === user.ome?.diretoriaId;
+        } else {
+          return evento.ome?.diretoriaId === user.ome?.diretoriaId;
+        }
+      });
+    }
+
+    return filtrados.map((item) => new ReturnPjesEventoDto(item));
+  }
+
+  /*
+  async findAllResumoPorDiretoria(
+    mes?: number,
+    ano?: number,
+    omeMin?: number,
+    omeMax?: number,
+  ): Promise<ReturnPjesEventoDto[]> {
+    const where: any = {};
+
+    if (mes) {
+      where.pjesdist = { mes };
+    }
+
+    if (ano) {
+      where.pjesdist = { ...where.pjesdist, ano };
+    }
+
+    if (omeMin !== undefined && omeMax !== undefined) {
+      where.omeId = Between(omeMin, omeMax);
+    }
+
+    const items = await this.pjeseventoRepository.find({
+      where,
+      relations: [
+        'ome',
+        'ome.diretoria',
+        'pjesoperacoes.pjesescalas',
+        'pjesdist',
+      ],
+    });
+
+    return items.map((item) => new ReturnPjesEventoDto(item));
+  }
+
+  */
+
+  async findAllResumoPorDiretoria(
+    mes?: number,
+    ano?: number,
+    omeMin?: number,
+    omeMax?: number,
+    user?: LoginPayload,
+  ): Promise<{
+    eventos: ReturnPjesEventoDto[];
+    resumo: {
+      somattCtOfEvento: number;
+      somattCotaOfEscala: number;
+      somattCtPrcEvento: number;
+      somattCotaPrcEscala: number;
+      valorTtPlanejado: number;
+      valorTtExecutado: number;
+      saldoFinal: number;
+    };
+  }> {
+    const where: any = {};
+
+    if (mes) where.pjesdist = { mes };
+    if (ano) where.pjesdist = { ...where.pjesdist, ano };
+    if (omeMin !== undefined && omeMax !== undefined) {
+      where.omeId = Between(omeMin, omeMax);
+    }
+
+    const items = await this.pjeseventoRepository.find({
+      where,
+      relations: [
+        'ome',
+        'ome.diretoria',
+        'pjesoperacoes.pjesescalas',
+        'pjesdist',
+      ],
+    });
+
+    // Filtro adicional por diretoria do usuário, se for typeUser === 3
+    let filtrados = items;
+
+    if (user?.typeUser === 1) {
+      filtrados = items.filter((evento) => evento.omeId === user.omeId);
+    } else if (user?.typeUser === 3) {
+      filtrados = items.filter((evento) => {
+        if (evento.codVerba !== 247) {
+          return evento.pjesdist?.diretoriaId === user.ome?.diretoriaId;
+        } else {
+          return evento.ome?.diretoriaId === user.ome?.diretoriaId;
+        }
+      });
+    }
+
+    const dtos = filtrados.map((item) => new ReturnPjesEventoDto(item));
+
+    const resumo = {
+      somattCtOfEvento: 0,
+      somattCotaOfEscala: 0,
+      somattCtPrcEvento: 0,
+      somattCotaPrcEscala: 0,
+      valorTtPlanejado: 0,
+      valorTtExecutado: 0,
+      saldoFinal: 0,
+    };
+
+    for (const dto of dtos) {
+      resumo.somattCtOfEvento += dto.somattCtOfEvento;
+      resumo.somattCotaOfEscala += dto.somattCotaOfEscala;
+      resumo.somattCtPrcEvento += dto.somattCtPrcEvento;
+      resumo.somattCotaPrcEscala += dto.somattCotaPrcEscala;
+      resumo.valorTtPlanejado += dto.valorTtPlanejado || 0;
+      resumo.valorTtExecutado += dto.valorTtExecutado || 0;
+      resumo.saldoFinal += dto.saldoFinal || 0;
+    }
+
+    return { eventos: dtos, resumo };
+  }
+
+  async findResumoFiltradoPorDiretoria(
+    mes?: number,
+    ano?: number,
+    user?: LoginPayload,
+  ): Promise<any> {
+    const where: any = {};
+
+    if (mes) where.pjesdist = { mes };
+    if (ano) where.pjesdist = { ...where.pjesdist, ano };
+
+    const eventos = await this.pjeseventoRepository.find({
+      where,
+      relations: [
+        'ome',
+        'ome.diretoria',
+        'pjesoperacoes.pjesescalas',
+        'pjesdist',
+      ],
+    });
+
+    // Aplica o filtro por diretoriaId se for typeUser 3
+    let filtrados = eventos;
+
+    if (user?.typeUser === 1) {
+      filtrados = eventos.filter((evento) => evento.omeId === user.omeId);
+    } else if (user?.typeUser === 3) {
+      filtrados = eventos.filter((evento) => {
+        if (evento.codVerba !== 247) {
+          return evento.pjesdist?.diretoriaId === user.ome?.diretoriaId;
+        } else {
+          return evento.ome?.diretoriaId === user.ome?.diretoriaId;
+        }
+      });
+    }
+
+    // Transforma cada evento em DTO
+    const dtos = filtrados.map((item) => new ReturnPjesEventoDto(item));
+
+    // Agrega os valores desejados
+    const resumo = {
+      somattCtOfEvento: 0,
+      somattCotaOfEscala: 0,
+      somattCtPrcEvento: 0,
+      somattCotaPrcEscala: 0,
+      valorTtPlanejado: 0,
+      valorTtExecutado: 0,
+      saldoFinal: 0,
+    };
+
+    for (const dto of dtos) {
+      resumo.somattCtOfEvento += dto.somattCtOfEvento;
+      resumo.somattCotaOfEscala += dto.somattCotaOfEscala;
+      resumo.somattCtPrcEvento += dto.somattCtPrcEvento;
+      resumo.somattCotaPrcEscala += dto.somattCotaPrcEscala;
+      resumo.valorTtPlanejado += dto.valorTtPlanejado || 0;
+      resumo.valorTtExecutado += dto.valorTtExecutado || 0;
+      resumo.saldoFinal += dto.saldoFinal || 0;
+    }
+
+    return resumo;
   }
 
   async findOne(id: number): Promise<ReturnPjesEventoDto> {
@@ -98,7 +308,7 @@ export class PjesEventoService {
     if (!pjesevento) {
       throw new NotFoundException('Evento não encontrado');
     }
-    return pjesevento;
+    return new ReturnPjesEventoDto(pjesevento);
   }
 
   async update(
