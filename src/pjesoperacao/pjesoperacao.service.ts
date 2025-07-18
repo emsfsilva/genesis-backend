@@ -97,20 +97,36 @@ export class PjesOperacaoService {
   async remove(id: number, user: LoginPayload): Promise<void> {
     const operation = await this.pjesOperacaoRepository.findOne({
       where: { id },
-      relations: ['pjesevento'],
+      relations: ['pjesevento', 'pjesescalas'], // atenção aqui: 'pjesescalas'
     });
 
-    if (!operation) throw new NotFoundException('Operação não encontrada');
+    if (!operation) {
+      throw new NotFoundException('Operação não encontrada');
+    }
 
     const evento = await this.pjesEventoRepository.findOne({
       where: { id: operation.pjesEventoId },
     });
 
-    if (!evento) throw new NotFoundException('Evento não encontrado');
+    if (!evento) {
+      throw new NotFoundException('Evento não encontrado');
+    }
 
+    // Impede exclusão se evento estiver homologado e o usuário não for do tipo 10
     if (evento.statusEvento === 'HOMOLOGADA' && user.typeUser !== 10) {
       throw new BadRequestException(
         'Evento homologado. Exclusão não permitida.',
+      );
+    }
+
+    // 🚫 Impede exclusão se houver escalas associadas e o usuário não for tipo 5 ou 10
+    if (
+      operation.pjesescalas &&
+      operation.pjesescalas.length > 0 &&
+      ![5, 10].includes(user.typeUser)
+    ) {
+      throw new BadRequestException(
+        'Não é permitido excluir operações com policiais já escalados.',
       );
     }
 

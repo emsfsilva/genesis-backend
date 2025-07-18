@@ -22,11 +22,11 @@ import { User } from 'src/decorators/user.decorator';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('user')
-@Roles(UserType.Master, UserType.Auxiliar)
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post()
+  @Roles(UserType.Master, UserType.Auxiliar)
   async createUser(
     @Body() createUser: CreateUserDto,
     @User() loggedUser: LoginPayload,
@@ -48,6 +48,7 @@ export class UserController {
   }
 
   @Patch('/:userId')
+  @Roles(UserType.Master, UserType.Auxiliar)
   async updateUser(
     @Param('userId') userId: number,
     @Body() updatedUser: Partial<CreateUserDto>,
@@ -63,6 +64,7 @@ export class UserController {
 
   @Delete('/:userId')
   @HttpCode(204)
+  @Roles(UserType.Master, UserType.Auxiliar)
   async deleteUser(
     @Param('userId')
     userId: number,
@@ -85,6 +87,7 @@ export class UserController {
   }
 
   @Patch('/reset-password/:userId')
+  @Roles(UserType.Master, UserType.Auxiliar)
   async resetPassword(
     @Param('userId') userId: number,
     @User() loggedUser: LoginPayload,

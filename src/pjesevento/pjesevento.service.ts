@@ -11,6 +11,8 @@ import { CreatePjesEventoDto } from './dtos/create-pjesevento.dto';
 import { PjesDistEntity } from 'src/pjesdist/entities/pjesdist.entity';
 import { LoginPayload } from 'src/auth/dtos/loginPayload.dto';
 import { UpdateStatusPjesEventoDto } from './dtos/update-status-pjesevento.dto';
+import { ReturnPjesOperacaoDto } from 'src/pjesoperacao/dtos/return-pjesoperacao.dto';
+import { PjesEscalaEntity } from 'src/pjesescala/entities/pjesescala.entity';
 
 @Injectable()
 export class PjesEventoService {
@@ -20,6 +22,9 @@ export class PjesEventoService {
 
     @InjectRepository(PjesDistEntity)
     private readonly pjesDistRepository: Repository<PjesDistEntity>,
+
+    @InjectRepository(PjesEscalaEntity)
+    private readonly pjesEscalaRepository: Repository<PjesEscalaEntity>,
   ) {}
 
   async create(
@@ -40,9 +45,18 @@ export class PjesEventoService {
       throw new NotFoundException('Distribuição base não encontrada');
     }
 
-    if (dist.statusDist === 'HOMOLOGADA' && user.typeUser !== 10) {
+    const isHomologada = dist.statusDist === 'HOMOLOGADA';
+    const isUserAutorizado = user.typeUser === 10 || user.typeUser === 5;
+    if (isHomologada && !isUserAutorizado) {
       throw new BadRequestException(
-        'Distribuição homologada. Contate o Adminitrador.',
+        'Distribuição homologada. Contate o Administrador.',
+      );
+    }
+
+    const isAtrasado = createDto.regularOuAtrasado === 'ATRASADO';
+    if (isAtrasado && !isUserAutorizado) {
+      throw new BadRequestException(
+        'Você não tem permissão para criar eventos atrasados. Contate o Administrador.',
       );
     }
 
@@ -92,13 +106,8 @@ export class PjesEventoService {
   ): Promise<ReturnPjesEventoDto[]> {
     const where: any = {};
 
-    if (mes) {
-      where.pjesdist = { mes };
-    }
-
-    if (ano) {
-      where.pjesdist = { ...where.pjesdist, ano };
-    }
+    if (mes) where.pjesdist = { mes };
+    if (ano) where.pjesdist = { ...where.pjesdist, ano };
 
     const items = await this.pjeseventoRepository.find({
       where,
@@ -106,64 +115,36 @@ export class PjesEventoService {
         'ome',
         'ome.diretoria',
         'pjesoperacoes.pjesescalas',
+        'pjesoperacoes.ome',
         'pjesdist',
         'pjesdist.diretoria',
       ],
+      order: { id: 'DESC' },
     });
 
     let filtrados = items;
 
     if (user?.typeUser === 1) {
-      // Apenas eventos da OME do usuário
       filtrados = items.filter((evento) => evento.omeId === user.omeId);
     } else if (user?.typeUser === 3) {
       filtrados = items.filter((evento) => {
         if (evento.codVerba !== 247) {
           return evento.pjesdist?.diretoriaId === user.ome?.diretoriaId;
-        } else {
-          return evento.ome?.diretoriaId === user.ome?.diretoriaId;
         }
+        return evento.ome?.diretoriaId === user.ome?.diretoriaId;
       });
     }
 
-    return filtrados.map((item) => new ReturnPjesEventoDto(item));
-  }
+    return filtrados.map((evento) => {
+      const operacoesComDTO = evento.pjesoperacoes?.map(
+        (op) => new ReturnPjesOperacaoDto(op),
+      );
 
-  /*
-  async findAllResumoPorDiretoria(
-    mes?: number,
-    ano?: number,
-    omeMin?: number,
-    omeMax?: number,
-  ): Promise<ReturnPjesEventoDto[]> {
-    const where: any = {};
+      const eventoDTO = new ReturnPjesEventoDto(evento, operacoesComDTO);
 
-    if (mes) {
-      where.pjesdist = { mes };
-    }
-
-    if (ano) {
-      where.pjesdist = { ...where.pjesdist, ano };
-    }
-
-    if (omeMin !== undefined && omeMax !== undefined) {
-      where.omeId = Between(omeMin, omeMax);
-    }
-
-    const items = await this.pjeseventoRepository.find({
-      where,
-      relations: [
-        'ome',
-        'ome.diretoria',
-        'pjesoperacoes.pjesescalas',
-        'pjesdist',
-      ],
+      return eventoDTO;
     });
-
-    return items.map((item) => new ReturnPjesEventoDto(item));
   }
-
-  */
 
   async findAllResumoPorDiretoria(
     mes?: number,
@@ -310,7 +291,7 @@ export class PjesEventoService {
     }
     return new ReturnPjesEventoDto(pjesevento);
   }
-
+  /*
   async update(
     id: number,
     updateDto: CreatePjesEventoDto,
@@ -345,9 +326,18 @@ export class PjesEventoService {
       throw new NotFoundException('Distribuição base não encontrada');
     }
 
-    if (dist.statusDist === 'HOMOLOGADA' && user.typeUser !== 10) {
+    const isHomologada = dist.statusDist === 'HOMOLOGADA';
+    const isUserAutorizado = user.typeUser === 10 || user.typeUser === 5;
+    if (isHomologada && !isUserAutorizado) {
       throw new BadRequestException(
-        'Atualização inválida: Evento homologado. Contate o administrador.',
+        'Distribuição homologada. Contate o Administrador.',
+      );
+    }
+
+    const isAtrasado = updateDto.regularOuAtrasado === 'ATRASADO';
+    if (isAtrasado && !isUserAutorizado) {
+      throw new BadRequestException(
+        'Você não tem permissão para criar eventos atrasados. Contate o Administrador.',
       );
     }
 
@@ -395,6 +385,143 @@ export class PjesEventoService {
     return new ReturnPjesEventoDto(withRelations);
   }
 
+  */
+
+  async update(
+    id: number,
+    updateDto: CreatePjesEventoDto,
+    user: LoginPayload,
+  ): Promise<ReturnPjesEventoDto> {
+    // Busca o evento existente com suas relações
+    const existing = await this.pjeseventoRepository.findOne({
+      where: { id },
+      relations: ['pjesdist'],
+    });
+
+    if (!existing) {
+      throw new NotFoundException('Evento não encontrado');
+    }
+
+    // ✅ Impede troca de teto
+    if (updateDto.pjesDistId && updateDto.pjesDistId !== existing.pjesDistId) {
+      throw new BadRequestException(
+        'Não é permitido alterar o tipo da verba já criada.',
+      );
+    }
+
+    // Busca a distribuição base
+    const dist = await this.pjeseventoRepository.manager
+      .getRepository(PjesDistEntity)
+      .findOne({
+        where: { id: existing.pjesDistId },
+        relations: ['pjeseventos'],
+      });
+
+    if (!dist) {
+      throw new NotFoundException('Distribuição base não encontrada');
+    }
+
+    const isHomologada = dist.statusDist === 'HOMOLOGADA';
+    const isUserAutorizado = user.typeUser === 10 || user.typeUser === 5;
+
+    if (isHomologada && !isUserAutorizado) {
+      throw new BadRequestException(
+        'Distribuição homologada. Contate o Administrador.',
+      );
+    }
+
+    const isAtrasado = updateDto.regularOuAtrasado === 'ATRASADO';
+    if (isAtrasado && !isUserAutorizado) {
+      throw new BadRequestException(
+        'Você não tem permissão para criar eventos atrasados. Contate o Administrador.',
+      );
+    }
+
+    // 🔍 Soma cotas já utilizadas em escalas do evento, agrupadas por tipoSgp
+    const usadasEscalas = await this.pjeseventoRepository.manager
+      .getRepository(PjesEscalaEntity)
+      .createQueryBuilder('escala')
+      .select('escala.tipoSgp', 'tipoSgp')
+      .addSelect('SUM(escala.ttCota)', 'total')
+      .where('escala.pjesEventoId = :eventoId', { eventoId: id })
+      .groupBy('escala.tipoSgp')
+      .getRawMany();
+
+    // 🚫 Impede alterar o omeId se houver escalas vinculadas
+    const omeAlterado = updateDto.omeId && updateDto.omeId !== existing.omeId;
+    if (omeAlterado && usadasEscalas.length > 0) {
+      throw new BadRequestException(
+        'Não é permitido alterar a UNIDADE. Já existem policiais escalados.',
+      );
+    }
+
+    const somaUsadaOficiais = usadasEscalas
+      .filter((e) => e.tipoSgp === 'O')
+      .reduce((sum, e) => sum + Number(e.total), 0);
+
+    const somaUsadaPracas = usadasEscalas
+      .filter((e) => e.tipoSgp === 'P')
+      .reduce((sum, e) => sum + Number(e.total), 0);
+
+    // ❌ Impede redução abaixo do que já foi usado
+    if (updateDto.ttCtOfEvento < somaUsadaOficiais) {
+      throw new BadRequestException(
+        `Não é possível definir menos de ${somaUsadaOficiais} cotas de oficiais, pois já estão em uso.`,
+      );
+    }
+
+    if (updateDto.ttCtPrcEvento < somaUsadaPracas) {
+      throw new BadRequestException(
+        `Não é possível definir menos de ${somaUsadaPracas} cotas de praças, pois já estão em uso.`,
+      );
+    }
+
+    // Soma atual total (inclui o evento atual)
+    const somaAtualOficiais = dist.pjeseventos.reduce(
+      (sum, ev) => sum + ev.ttCtOfEvento,
+      0,
+    );
+
+    const somaAtualPracas = dist.pjeseventos.reduce(
+      (sum, ev) => sum + ev.ttCtPrcEvento,
+      0,
+    );
+
+    // Subtrai os valores antigos do evento atual e adiciona os novos
+    const novaSomaOf =
+      somaAtualOficiais - existing.ttCtOfEvento + updateDto.ttCtOfEvento;
+
+    const novaSomaPrc =
+      somaAtualPracas - existing.ttCtPrcEvento + updateDto.ttCtPrcEvento;
+
+    // Validação dos limites da distribuição
+    if (novaSomaOf > dist.ttCtOfDist) {
+      throw new BadRequestException(
+        `Atualização inválida: oficiais excedem limite da distribuição (${novaSomaOf} > ${dist.ttCtOfDist})`,
+      );
+    }
+
+    if (novaSomaPrc > dist.ttCtPrcDist) {
+      throw new BadRequestException(
+        `Atualização inválida: praças excedem limite da distribuição (${novaSomaPrc} > ${dist.ttCtPrcDist})`,
+      );
+    }
+
+    // 🔒 Remove pjesDistId do DTO para não permitir alteração
+    delete updateDto.pjesDistId;
+
+    // Atualiza e salva
+    const updated = this.pjeseventoRepository.merge(existing, updateDto);
+    await this.pjeseventoRepository.save(updated);
+
+    const withRelations = await this.pjeseventoRepository.findOne({
+      where: { id },
+      relations: ['ome'],
+    });
+
+    return new ReturnPjesEventoDto(withRelations);
+  }
+
   async updateStatusEvento(
     id: number,
     dto: UpdateStatusPjesEventoDto,
@@ -415,6 +542,14 @@ export class PjesEventoService {
       throw new NotFoundException('Distribuição do evento não encontrada');
     }
 
+    // 🚫 Restringe alteração de status apenas a usuários do tipo 5 ou 10
+    if (![5, 10].includes(user.typeUser)) {
+      throw new BadRequestException(
+        'Usuário sem permissão para alterar o status do evento.',
+      );
+    }
+
+    // Verifica se a distribuição está homologada
     if (dist.statusDist === 'HOMOLOGADA' && user.typeUser !== 10) {
       throw new BadRequestException(
         'Evento pertencente a uma distribuição homologada. Alteração não permitida.',
@@ -430,20 +565,36 @@ export class PjesEventoService {
   async remove(id: number, user: LoginPayload): Promise<void> {
     const evento = await this.pjeseventoRepository.findOne({
       where: { id },
-      relations: ['pjesdist'],
+      relations: ['pjesdist', 'pjesoperacoes', 'pjesoperacoes.pjesescalas'],
     });
 
-    if (!evento) throw new NotFoundException('Evento não encontrada');
+    if (!evento) {
+      throw new NotFoundException('Evento não encontrado');
+    }
 
     const dist = await this.pjesDistRepository.findOne({
       where: { id: evento.pjesDistId },
     });
 
-    if (!dist) throw new NotFoundException('Distribuição não encontrado');
+    if (!dist) {
+      throw new NotFoundException('Distribuição não encontrada');
+    }
 
+    // 🚫 Impede exclusão se distribuição estiver homologada
     if (dist.statusDist === 'HOMOLOGADA' && user.typeUser !== 10) {
       throw new BadRequestException(
         'Evento homologado. Exclusão não permitida.',
+      );
+    }
+
+    // 🚫 Impede exclusão se houver escalas associadas e usuário não for 5 ou 10
+    const hasEscalas = evento.pjesoperacoes?.some(
+      (op) => op.pjesescalas && op.pjesescalas.length > 0,
+    );
+
+    if (hasEscalas && ![5, 10].includes(user.typeUser)) {
+      throw new BadRequestException(
+        'Não é permitido excluir eventos com policiais escalados.',
       );
     }
 

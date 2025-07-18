@@ -44,23 +44,6 @@ export class PjesEventoController {
     return this.pjeseventoService.findAll(mes, ano, user);
   }
 
-  /*
-  @Get('resumo-por-diretoria')
-  async findAllResumoPorDiretoria(
-    @Query('mes') mes?: number,
-    @Query('ano') ano?: number,
-    @Query('omeMin') omeMin?: number,
-    @Query('omeMax') omeMax?: number,
-  ): Promise<ReturnPjesEventoDto[]> {
-    return this.pjeseventoService.findAllResumoPorDiretoria(
-      mes,
-      ano,
-      Number(omeMin),
-      Number(omeMax),
-    );
-  }
-    */
-
   @Get('resumo-por-diretoria')
   async findAllResumoPorDiretoria(
     @Query('mes') mes?: number,

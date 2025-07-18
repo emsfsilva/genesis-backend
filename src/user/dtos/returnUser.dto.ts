@@ -6,6 +6,7 @@ import { ReturnMasterDTO } from 'src/master/dtos/return-master.dto';
 export class ReturnUserDto {
   id: number;
   imagemUrl?: string;
+  loginSei: string;
   email: string;
   phone: string;
   omeId: number;
@@ -22,6 +23,7 @@ export class ReturnUserDto {
   constructor(userEntity: any) {
     this.id = userEntity.id;
     this.imagemUrl = userEntity.imagemUrl;
+    this.loginSei = userEntity.loginSei;
     this.email = userEntity.email;
     this.phone = userEntity.phone;
     this.omeId = userEntity.omeId;

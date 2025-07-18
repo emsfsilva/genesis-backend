@@ -19,6 +19,7 @@ import { UpdateObsPjesEscalaDto } from './dtos/update-obs-pjesescala.dto';
 import * as ExcelJS from 'exceljs';
 import * as fs from 'fs';
 import { Response } from 'express';
+import { PjesEscalaStatusLogEntity } from './entities/pjesescala-status-log.entity';
 
 @Injectable()
 export class PjesEscalaService {
@@ -31,6 +32,9 @@ export class PjesEscalaService {
 
     @InjectRepository(OmeEntity)
     private readonly omeRepository: Repository<OmeEntity>,
+
+    @InjectRepository(PjesEscalaStatusLogEntity)
+    private readonly escalaStatusLogRepository: Repository<PjesEscalaStatusLogEntity>,
 
     private readonly dataSource: DataSource,
   ) {}
@@ -99,6 +103,147 @@ export class PjesEscalaService {
       nomeOme: escala.ome?.nomeOme || escala.omeSgp,
       ttCota: escala.ttCota,
     }));
+  }
+
+  /*
+  async getMinhasEscalas(
+    matSgp: number,
+    ano?: number,
+    mes?: number,
+  ): Promise<
+    {
+      dia: string;
+      nomeOme: string;
+      localApresentacaoSgp: string;
+      ttCota: number;
+    }[]
+  > {
+    const queryBuilder = this.pjesEscalaRepository
+      .createQueryBuilder('escala')
+      .leftJoinAndSelect('escala.ome', 'ome')
+      .leftJoinAndSelect('escala.pjesoperacao', 'pjesoperacao')
+      .leftJoinAndSelect('escala.statusLogs', 'log')
+      .where('escala.matSgp = :matSgp', { matSgp });
+
+    if (ano) {
+      queryBuilder.andWhere('EXTRACT(YEAR FROM escala.dataInicio) = :ano', {
+        ano,
+      });
+    }
+
+    if (mes) {
+      queryBuilder.andWhere('EXTRACT(MONTH FROM escala.dataInicio) = :mes', {
+        mes,
+      });
+    }
+
+    queryBuilder.orderBy('escala.dataInicio', 'ASC');
+
+    const escalas = await queryBuilder.getMany();
+
+    return escalas.map((escala) => ({
+      dia: new Date(escala.dataInicio).toISOString().split('T')[0],
+      nomeOperacao: escala.pjesoperacao?.nomeOperacao,
+      nomeOme: escala.ome?.nomeOme || escala.omeSgp,
+      localApresentacaoSgp: escala.localApresentacaoSgp,
+      situacaoSgp: escala.situacaoSgp,
+      horaInicio: escala.horaInicio,
+      horaFinal: escala.horaFinal,
+      funcao: escala.funcao,
+      statusEscala: escala.statusEscala,
+      obs: escala.obs,
+      ttCota: escala.ttCota,
+    }));
+  }
+
+  */
+
+  async getMinhasEscalas(
+    matSgp: number,
+    ano?: number,
+    mes?: number,
+  ): Promise<
+    {
+      dia: string;
+      nomeOperacao: string;
+      nomeOme: string;
+      localApresentacaoSgp: string;
+      situacaoSgp: string;
+      horaInicio: string;
+      horaFinal: string;
+      funcao: string;
+      statusEscala: string;
+      obs: string;
+      ttCota: number;
+      ultimoStatusLog?: {
+        novoStatus: string;
+        dataAlteracao: string;
+        pg: string;
+        imagemUrl: string;
+        nomeGuerra: string;
+        nomeOme: string;
+      };
+    }[]
+  > {
+    const queryBuilder = this.pjesEscalaRepository
+      .createQueryBuilder('escala')
+      .leftJoinAndSelect('escala.ome', 'ome')
+      .leftJoinAndSelect('escala.pjesoperacao', 'pjesoperacao')
+      .leftJoinAndSelect('escala.statusLogs', 'log') // pegamos os logs para extrair o último
+      .where('escala.matSgp = :matSgp', { matSgp });
+
+    if (ano) {
+      queryBuilder.andWhere('EXTRACT(YEAR FROM escala.dataInicio) = :ano', {
+        ano,
+      });
+    }
+
+    if (mes) {
+      queryBuilder.andWhere('EXTRACT(MONTH FROM escala.dataInicio) = :mes', {
+        mes,
+      });
+    }
+
+    queryBuilder.orderBy('escala.dataInicio', 'ASC');
+
+    const escalas = await queryBuilder.getMany();
+
+    return escalas.map((escala) => {
+      // Ordena os statusLogs pela data (mais recente primeiro)
+      const logsOrdenados = escala.statusLogs.sort(
+        (a, b) =>
+          new Date(b.dataAlteracao).getTime() -
+          new Date(a.dataAlteracao).getTime(),
+      );
+
+      const ultimoLog = logsOrdenados[0];
+
+      return {
+        dia: new Date(escala.dataInicio).toISOString().split('T')[0],
+        nomeOperacao: escala.pjesoperacao?.nomeOperacao ?? '',
+        nomeOme: escala.ome?.nomeOme ?? escala.omeSgp,
+        localApresentacaoSgp: escala.localApresentacaoSgp,
+        situacaoSgp: escala.situacaoSgp,
+        horaInicio: escala.horaInicio,
+        horaFinal: escala.horaFinal,
+        funcao: escala.funcao,
+        statusEscala: escala.statusEscala,
+        obs: escala.obs,
+        ttCota: escala.ttCota,
+
+        // novo campo incluído
+        ultimoStatusLog: ultimoLog
+          ? {
+              novoStatus: ultimoLog.novoStatus,
+              dataAlteracao: ultimoLog.dataAlteracao.toISOString(),
+              pg: ultimoLog.pg,
+              imagemUrl: ultimoLog.imagemUrl,
+              nomeGuerra: ultimoLog.nomeGuerra,
+              nomeOme: ultimoLog.nomeOme,
+            }
+          : undefined,
+      };
+    });
   }
 
   async getQuantidadePorMatriculaAnoMes(
@@ -176,27 +321,40 @@ export class PjesEscalaService {
       }
 
       const ttCotaCalculado = dto.horaInicio === dto.horaFinal ? 2 : 1;
-      const escalasDaOperacao = operacao.pjesescalas ?? [];
       const tipo = dto.tipoSgp?.toUpperCase();
 
       if (tipo === 'O') {
-        const totalCotasOf = escalasDaOperacao
-          .filter((e) => e.tipoSgp?.toUpperCase() === 'O')
-          .reduce((sum, e) => sum + e.ttCota, 0);
+        const totalCotasOf = await manager
+          .getRepository(PjesEscalaEntity)
+          .createQueryBuilder('escala')
+          .where('escala.pjesOperacaoId = :operacaoId', {
+            operacaoId: dto.pjesOperacaoId,
+          })
+          .andWhere('UPPER(escala.tipoSgp) = :tipo', { tipo: 'O' })
+          .select('SUM(escala.ttCota)', 'total')
+          .getRawOne()
+          .then((res) => Number(res.total) || 0);
 
         if (totalCotasOf + ttCotaCalculado > operacao.ttCtOfOper) {
           throw new BadRequestException(
-            `Não ha mais cotas de Oficiais para esse Evento ou Operacao`,
+            `Não há mais cotas de Oficiais para esse Evento ou Operação`,
           );
         }
       } else if (tipo === 'P') {
-        const totalCotasPrc = escalasDaOperacao
-          .filter((e) => e.tipoSgp?.toUpperCase() === 'P')
-          .reduce((sum, e) => sum + e.ttCota, 0);
+        const totalCotasPrc = await manager
+          .getRepository(PjesEscalaEntity)
+          .createQueryBuilder('escala')
+          .where('escala.pjesOperacaoId = :operacaoId', {
+            operacaoId: dto.pjesOperacaoId,
+          })
+          .andWhere('UPPER(escala.tipoSgp) = :tipo', { tipo: 'P' })
+          .select('SUM(escala.ttCota)', 'total')
+          .getRawOne()
+          .then((res) => Number(res.total) || 0);
 
         if (totalCotasPrc + ttCotaCalculado > operacao.ttCtPrcOper) {
           throw new BadRequestException(
-            `Não ha mais cotas de Praças para esse Evento ou Operacao`,
+            `Não há mais cotas de Praças para esse Evento ou Operação`,
           );
         }
       } else {
@@ -318,13 +476,12 @@ export class PjesEscalaService {
         throw new NotFoundException('Escala não encontrada');
       }
 
-      // ✅ Impede troca de teto
       if (
         dto.pjesOperacaoId &&
         dto.pjesOperacaoId !== escalaAtual.pjesOperacaoId
       ) {
         throw new BadRequestException(
-          'Não é permitido alterar o tipo da verba ja criada.',
+          'Não é permitido alterar o tipo da verba já criada.',
         );
       }
 
@@ -337,7 +494,6 @@ export class PjesEscalaService {
       }
 
       const eventoId = dto.pjesEventoId ?? escalaAtual.pjesEventoId;
-
       const evento = await manager.findOne(PjesEventoEntity, {
         where: { id: eventoId },
         relations: ['pjesdist'],
@@ -345,8 +501,6 @@ export class PjesEscalaService {
 
       if (!evento) throw new NotFoundException('Evento não encontrado');
 
-      /*VERIFICAÇÃO SE O USER LOGADO É O MESMO PARA O QUAL FOI DESTINADO O EVENTO */
-      /*EXCETO PARA: USUARIO MASTER E TECNICO*/
       this.verificarPermissaoDeAcesso(evento, user);
 
       if (evento.statusEvento === 'HOMOLOGADA' && user.typeUser !== 10) {
@@ -360,10 +514,10 @@ export class PjesEscalaService {
         throw new BadRequestException('Data de início inválida');
       }
 
-      const mes = dataInicio.getMonth() + 1;
-      const ano = dataInicio.getFullYear();
-
-      if (mes !== evento.mes || ano !== evento.ano) {
+      if (
+        dataInicio.getMonth() + 1 !== evento.mes ||
+        dataInicio.getFullYear() !== evento.ano
+      ) {
         throw new BadRequestException(
           'A nova data de início não corresponde ao mês/ano do evento.',
         );
@@ -378,18 +532,18 @@ export class PjesEscalaService {
         .andWhere('escala.dataInicio = :dataInicio', {
           dataInicio: dto.dataInicio,
         })
+        .andWhere('escala.id != :id', { id }) // evitar pegar a própria
         .getOne();
 
       if (existeoutra) {
-        // Busca a OME da escala existente
-        const omeDaEscalaExistente = await manager.findOne(OmeEntity, {
+        const omeDaEscala = await manager.findOne(OmeEntity, {
           where: { id: existeoutra.omeId },
         });
 
         throw new BadRequestException(
           `Já existe uma escala para o militar ${dto.matSgp} na data ${
             dto.dataInicio
-          } na OME: ${omeDaEscalaExistente?.nomeOme || 'desconhecida'}.`,
+          } na OME: ${omeDaEscala?.nomeOme || 'desconhecida'}.`,
         );
       }
 
@@ -405,31 +559,31 @@ export class PjesEscalaService {
       const operacaoId = dto.pjesOperacaoId ?? escalaAtual.pjesOperacaoId;
       const operacao = await manager.findOne(PjesOperacaoEntity, {
         where: { id: operacaoId },
-        relations: ['pjesescalas'],
       });
 
       if (!operacao) throw new NotFoundException('Operação não encontrada');
 
-      const outrasEscalasMesmoTipo = operacao.pjesescalas.filter(
-        (e) => e.id !== escalaAtual.id && e.tipoSgp?.toUpperCase() === tipoNovo,
-      );
+      const totalCotasTipo = await manager
+        .getRepository(PjesEscalaEntity)
+        .createQueryBuilder('escala')
+        .where('escala.pjesOperacaoId = :operacaoId', { operacaoId })
+        .andWhere('UPPER(escala.tipoSgp) = :tipo', { tipo: tipoNovo })
+        .select('SUM(escala.ttCota)', 'total')
+        .getRawOne()
+        .then((res) => Number(res.total) || 0);
 
-      const somaOutrasCotas = outrasEscalasMesmoTipo.reduce(
-        (sum, e) => sum + e.ttCota,
-        0,
-      );
+      const totalFuturo = totalCotasTipo - escalaAtual.ttCota + novoTtCota;
 
-      const totalFuturo = somaOutrasCotas + novoTtCota;
-
-      if (tipoNovo === 'O' && totalFuturo > operacao.ttCtOfOper) {
+      if (
+        (tipoNovo === 'O' && totalFuturo > operacao.ttCtOfOper) ||
+        (tipoNovo === 'P' && totalFuturo > operacao.ttCtPrcOper)
+      ) {
         throw new BadRequestException(
-          `Atualização inválida: cotas para oficiais excederiam o limite (${totalFuturo} > ${operacao.ttCtOfOper}).`,
-        );
-      }
-
-      if (tipoNovo === 'P' && totalFuturo > operacao.ttCtPrcOper) {
-        throw new BadRequestException(
-          `Atualização inválida: cotas para praças excederiam o limite (${totalFuturo} > ${operacao.ttCtPrcOper}).`,
+          `Atualização inválida: cotas para ${
+            tipoNovo === 'O' ? 'oficiais' : 'praças'
+          } excederiam o limite (${totalFuturo} > ${
+            tipoNovo === 'O' ? operacao.ttCtOfOper : operacao.ttCtPrcOper
+          }).`,
         );
       }
 
@@ -441,7 +595,6 @@ export class PjesEscalaService {
         id,
       );
 
-      // 🔒 Remove pjesOperacaoId para garantir que não será alterado
       delete dto.pjesOperacaoId;
 
       await manager.update(PjesEscalaEntity, id, {
@@ -463,14 +616,13 @@ export class PjesEscalaService {
   ): Promise<ReturnPjesEscalaDto> {
     const escala = await this.pjesEscalaRepository.findOne({
       where: { id },
-      relations: ['pjesevento'], // 👈 necessário para acessar o status do evento
+      relations: ['pjesevento'],
     });
 
     if (!escala) {
       throw new NotFoundException('Escala não encontrada');
     }
 
-    // ✅ Verifica se o evento está homologado
     if (
       escala.pjesevento?.statusEvento === 'HOMOLOGADA' &&
       user.typeUser !== 1
@@ -480,9 +632,22 @@ export class PjesEscalaService {
       );
     }
 
+    // Atualiza status
     escala.statusEscala = dto.statusEscala;
-
     const saved = await this.pjesEscalaRepository.save(escala);
+
+    // Salva log de alteração
+    const log = this.escalaStatusLogRepository.create({
+      escala: { id: escala.id } as any, // Evita buscar novamente o objeto completo
+      novoStatus: dto.statusEscala,
+      userId: user.id,
+      pg: user.pg,
+      imagemUrl: user.imagemUrl,
+      nomeGuerra: user.nomeGuerra,
+      nomeOme: user?.ome?.nomeOme ?? '',
+    });
+
+    await this.escalaStatusLogRepository.save(log);
 
     return new ReturnPjesEscalaDto(saved);
   }
@@ -664,19 +829,29 @@ export class PjesEscalaService {
   async gerarExcel(
     mes: number,
     ano: number,
+    regularOuAtrasado: string, // 👈 Adicionado aqui
     user: LoginPayload,
     res: Response,
   ): Promise<void> {
     const query = this.pjesEscalaRepository
       .createQueryBuilder('escala')
       .leftJoin('escala.pjesoperacao', 'pjesoperacao')
+      .leftJoin('escala.pjesevento', 'pjesevento') // 👈 JOIN para acessar o evento
       .leftJoin('pjesoperacao.ome', 'ome')
       .where('EXTRACT(MONTH FROM escala.dataInicio) = :mes', { mes })
       .andWhere('EXTRACT(YEAR FROM escala.dataInicio) = :ano', { ano });
 
-    // 🔐 Restrição por OME se for auxiliar
-    if (user.typeUser === 1) {
+    if (user?.typeUser === 1) {
       query.andWhere('escala.omeId = :omeId', { omeId: user.omeId });
+    }
+
+    if (regularOuAtrasado) {
+      query.andWhere(
+        'TRIM(UPPER(pjesevento.regularOuAtrasado)) = :regularOuAtrasado',
+        {
+          regularOuAtrasado: regularOuAtrasado.trim().toUpperCase(),
+        },
+      );
     }
 
     const dados = await query
@@ -758,6 +933,9 @@ export class PjesEscalaService {
     const anoAtual = agora.getFullYear();
     const hora = String(agora.getHours()).padStart(2, '0');
     const minuto = String(agora.getMinutes()).padStart(2, '0');
+    const situacaoFormatada = `Situação: ${
+      regularOuAtrasado?.toUpperCase() ?? ''
+    }`;
 
     worksheet.getCell(
       'B7',
@@ -769,12 +947,46 @@ export class PjesEscalaService {
     worksheet.getCell('B7').alignment = { horizontal: 'right' };
 
     // 🔷 Título da Tabela de Resumo
+    // Célula B8 com texto completo
     worksheet.mergeCells('B8:R8');
-    worksheet.getCell(
-      'B8',
-    ).value = `ASSUNTO: PRESTAÇÃO DE CONTAS - ${this.nomeMes(mes)} - ${ano} - ${
+    const cellB8 = worksheet.getCell('B8');
+    cellB8.value = `ASSUNTO: PRESTAÇÃO DE CONTAS - ${this.nomeMes(
+      mes,
+    )} - ${ano} - ${
       user?.ome?.nomeOme ?? 'NOME DA OME'
-    }`;
+    } (${situacaoFormatada})`;
+
+    cellB8.font = { bold: true };
+    cellB8.alignment = { horizontal: 'left' };
+
+    // Aplica cor ao trecho "Situação: ..."
+    const startText = cellB8.value as string;
+    const startIndex = startText.indexOf(situacaoFormatada);
+
+    // Aplica rich text apenas se o trecho foi encontrado
+    if (startIndex !== -1) {
+      cellB8.value = {
+        richText: [
+          {
+            text: startText.substring(0, startIndex),
+            font: { bold: true },
+          },
+          {
+            text: situacaoFormatada,
+            font: {
+              color: {
+                argb:
+                  regularOuAtrasado?.toUpperCase() === 'REGULAR'
+                    ? '008000'
+                    : 'FF0000', // Verde ou vermelho
+              },
+              bold: true,
+            },
+          },
+        ],
+      };
+    }
+
     worksheet.getCell('B8').font = { bold: true };
     worksheet.getCell('B8').alignment = { horizontal: 'left' };
 

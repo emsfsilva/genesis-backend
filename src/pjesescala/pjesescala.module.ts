@@ -12,6 +12,7 @@ import { AuthModule } from 'src/auth/auth.module';
 import { OmeEntity } from 'src/ome/entities/ome.entity';
 import { OmeModule } from 'src/ome/ome.module';
 import { prestarContaController } from './prestarContaController';
+import { PjesEscalaStatusLogEntity } from './entities/pjesescala-status-log.entity';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { prestarContaController } from './prestarContaController';
       PjesEventoEntity,
       PjesOperacaoEntity,
       OmeEntity,
+      PjesEscalaStatusLogEntity,
     ]),
     PjesEventoModule,
     PjesOperacaoModule,

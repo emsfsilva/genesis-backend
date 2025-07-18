@@ -1,7 +1,11 @@
 import { IsString, IsEnum, IsNumber, IsOptional } from 'class-validator';
 import { UserType } from '../enum/user-type.enum';
+import { Exclude } from 'class-transformer';
 
 export class CreateUserDto {
+  @Exclude()
+  id?: number;
+
   @IsString()
   loginSei: string;
 

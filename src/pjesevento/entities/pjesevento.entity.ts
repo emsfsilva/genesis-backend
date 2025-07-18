@@ -36,6 +36,9 @@ export class PjesEventoEntity {
   @Column({ name: 'ttctprcevento', nullable: false })
   ttCtPrcEvento: number;
 
+  @Column({ name: 'regularouatrasado', nullable: false })
+  regularOuAtrasado: string;
+
   @Column({ name: 'userid', nullable: false })
   userId: number;
 

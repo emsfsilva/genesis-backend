@@ -1,4 +1,5 @@
 import { PjesDistEntity } from 'src/pjesdist/entities/pjesdist.entity';
+import { ReturnPjesOperacaoDto } from 'src/pjesoperacao/dtos/return-pjesoperacao.dto';
 import { PjesOperacaoEntity } from 'src/pjesoperacao/entities/pjesoperacao.entity';
 import { StatusEventoEnum } from 'src/utils/status-evento.enum';
 
@@ -10,12 +11,14 @@ export class ReturnPjesEventoDto {
   omeId: number;
   ttCtOfEvento: number;
   ttCtPrcEvento: number;
+  regularOuAtrasado: string;
   userId: number;
   statusEvento: StatusEventoEnum;
 
   // Relacionamentos aninhados
   pjesdist?: PjesDistEntity;
-  pjesoperacoes?: PjesOperacaoEntity[];
+  //pjesoperacoes?: PjesOperacaoEntity[];
+  pjesoperacoes?: ReturnPjesOperacaoDto[];
 
   somaCtOfOper?: number;
   somaCtPrcOper?: number;
@@ -50,7 +53,7 @@ export class ReturnPjesEventoDto {
   createdAt: Date;
   updatedAt: Date;
 
-  constructor(entity: any) {
+  constructor(entity: any, operacoesDTO?: ReturnPjesOperacaoDto[]) {
     this.id = entity.id;
     this.pjesDistId = entity.pjesDistId;
     this.codVerba = entity.codVerba;
@@ -58,6 +61,7 @@ export class ReturnPjesEventoDto {
     this.omeId = entity.omeId;
     this.ttCtOfEvento = entity.ttCtOfEvento;
     this.ttCtPrcEvento = entity.ttCtPrcEvento;
+    this.regularOuAtrasado = entity.regularOuAtrasado;
     this.userId = entity.userId;
     this.statusEvento = entity.statusEvento;
     this.mes = entity.mes;
@@ -67,7 +71,7 @@ export class ReturnPjesEventoDto {
     this.pjesdist = entity.pjesdist;
     this.nomeOme = entity.ome?.nomeOme;
     this.nomeDiretoria = entity.pjesdist?.diretoria?.nomeDiretoria;
-    this.pjesoperacoes = entity.pjesoperacoes;
+    this.pjesoperacoes = operacoesDTO || entity.pjesoperacoes;
 
     // Soma cotas de operações
     this.somaCtOfOper = entity.pjesoperacoes?.reduce(

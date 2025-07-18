@@ -9,9 +9,11 @@ import {
   Index,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { PjesEscalaStatusLogEntity } from './pjesescala-status-log.entity';
 
 @Entity({ name: 'pjesescala' })
 @Index(['matSgp', 'dataInicio'], { unique: true })
@@ -124,4 +126,7 @@ export class PjesEscalaEntity {
   @ManyToOne(() => OmeEntity)
   @JoinColumn({ name: 'omeid', referencedColumnName: 'id' })
   ome?: OmeEntity;
+
+  @OneToMany(() => PjesEscalaStatusLogEntity, (log) => log.escala)
+  statusLogs?: PjesEscalaStatusLogEntity[];
 }

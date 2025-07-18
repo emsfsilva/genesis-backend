@@ -36,6 +36,15 @@ export class ReturnPjesEscalaDto {
   mes?: number;
   ano?: number;
 
+  ultimoStatusLog?: {
+    novoStatus: string;
+    dataAlteracao: Date;
+    pg: string;
+    imagemUrl: string;
+    nomeGuerra: string;
+    nomeOme: string;
+  };
+
   userObs?: {
     id: number;
     pg: string;
@@ -96,6 +105,24 @@ export class ReturnPjesEscalaDto {
         ome: {
           nomeOme: entity.userObs.ome?.nomeOme ?? null,
         },
+      };
+    }
+
+    // Último log de status (se existir)
+    if (entity.statusLogs?.length > 0) {
+      const ultimoLog = entity.statusLogs.sort(
+        (a, b) =>
+          new Date(b.dataAlteracao).getTime() -
+          new Date(a.dataAlteracao).getTime(),
+      )[0];
+
+      this.ultimoStatusLog = {
+        novoStatus: ultimoLog.novoStatus,
+        dataAlteracao: ultimoLog.dataAlteracao,
+        pg: ultimoLog.pg,
+        imagemUrl: ultimoLog.imagemUrl,
+        nomeGuerra: ultimoLog.nomeGuerra,
+        nomeOme: ultimoLog.nomeOme,
       };
     }
   }

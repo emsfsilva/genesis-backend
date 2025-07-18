@@ -10,8 +10,6 @@ import {
   UseGuards,
   Query,
   Res,
-  Req,
-  BadRequestException,
 } from '@nestjs/common';
 import { PjesEscalaService } from './pjesescala.service';
 import { CreatePjesEscalaDto } from './dtos/create-pjesescala.dto';
@@ -25,14 +23,33 @@ import { Roles } from 'src/decorators/roles.decorator';
 import { UserType } from 'src/user/enum/user-type.enum';
 import { UpdateStatusPjesEscalaDto } from './dtos/update-status-pjesescala.dto';
 import { UpdateObsPjesEscalaDto } from './dtos/update-obs-pjesescala.dto';
-import { Request, Response } from 'express';
-import { FiltroExcelDto } from './dtos/filtro-excel.dto';
+import { Response } from 'express';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('pjesescala')
 @Roles(UserType.Master, UserType.Diretor, UserType.Auxiliar)
 export class PjesEscalaController {
   constructor(private readonly service: PjesEscalaService) {}
+
+  //PESQUISAR ESCALA DO USUARIO LOGADO
+  @Get('minhas-escalas')
+  async getMinhasEscalas(
+    @Query('ano') ano?: number,
+    @Query('mes') mes?: number,
+    @User() user?: LoginPayload,
+  ): Promise<any> {
+    return this.service.getMinhasEscalas(user.mat, ano, mes);
+  }
+
+  //PESQUISAR QUALQUER ESCALA PELO INPUT
+  @Get('escalas-por-matricula')
+  async getEscalasPorMatricula(
+    @Query('mat') matSgp: number,
+    @Query('ano') ano?: number,
+    @Query('mes') mes?: number,
+  ): Promise<any> {
+    return this.service.getMinhasEscalas(matSgp, ano, mes);
+  }
 
   @Get('cotas')
   async getCotasPorMatricula(
@@ -116,7 +133,6 @@ export class PjesEscalaController {
   }
 
   @Get('exportar')
-  //@Roles(UserType.Master, UserType.Auxiliar)
   async exportarEscala(
     @Query('mes', ParseIntPipe) mes: number,
     @Query('ano', ParseIntPipe) ano: number,
@@ -130,14 +146,17 @@ export class PjesEscalaController {
   async gerarExcel(
     @Query('mes', ParseIntPipe) mes: number,
     @Query('ano', ParseIntPipe) ano: number,
+    @Query('regularOuAtrasado') regularOuAtrasado: string, // 👈 Novo parâmetro
     @Res() res: Response,
   ) {
-    console.log('mes:', mes, 'ano:', ano);
-    return this.service.gerarExcel(mes, ano, null, res);
-  }
-  @Get('teste')
-  teste(@Query('mes') mes: string, @Query('ano') ano: string) {
-    console.log('mes:', mes, 'ano:', ano);
-    return { mes, ano };
+    console.log(
+      'mes:',
+      mes,
+      'ano:',
+      ano,
+      'regularOuAtrasado:',
+      regularOuAtrasado,
+    );
+    return this.service.gerarExcel(mes, ano, regularOuAtrasado, null, res);
   }
 }

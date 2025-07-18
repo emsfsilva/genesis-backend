@@ -34,24 +34,6 @@ export class PjesDistController {
     return this.pjesDistService.create(data, user);
   }
 
-  /*
-  @Get()
-  async findAll(
-    @Query('mes') mes?: number,
-    @Query('ano') ano?: number,
-  ): Promise<ReturnPjesDistDto[]> {
-    return this.pjesDistService.findAll(mes, ano);
-  }
-
-  @Get(':id')
-  async findOne(
-    @Param('id', ParseIntPipe) id: number,
-  ): Promise<ReturnPjesDistDto> {
-    return this.pjesDistService.findOne(id);
-  }
-
-  */
-
   @Get()
   async findAll(
     @User() user: LoginPayload,

@@ -1,8 +1,11 @@
-import { Entity, Column, PrimaryColumn } from 'typeorm';
+import { Entity, Column, PrimaryColumn, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity({ name: 'dadossgp' })
 export class DadosSgpEntity {
-  @PrimaryColumn({ name: 'matsgp', type: 'int' })
+  @PrimaryGeneratedColumn('rowid')
+  id: number;
+
+  @Column({ name: 'matsgp', type: 'int' })
   matSgp: number;
 
   @Column({ name: 'pgsgp', type: 'varchar' })

@@ -4,7 +4,8 @@ export class createTableDadosSgp1675770516772 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       CREATE TABLE public.dadossgp (
-        matsgp INTEGER PRIMARY KEY,
+        id INTEGER PRIMARY KEY,
+        matsgp INTEGER NOT NULL,
         pgsgp VARCHAR NOT NULL,
         ngsgp VARCHAR NOT NULL,
         nomecompletosgp VARCHAR NOT NULL,

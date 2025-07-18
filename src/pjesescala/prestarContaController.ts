@@ -8,7 +8,7 @@ import { Roles } from 'src/decorators/roles.decorator';
 import { User } from 'src/decorators/user.decorator';
 
 @Controller('prestarconta')
-@Roles(UserType.Master, UserType.Auxiliar)
+//@Roles(UserType.Master, UserType.Auxiliar)
 export class prestarContaController {
   constructor(private readonly service: PjesEscalaService) {}
   @Get('exportar')
@@ -21,6 +21,7 @@ export class prestarContaController {
     return this.service.exportarParaExcel(mes, ano, user, res);
   }
 
+  /*
   @Get('excel')
   async gerarExcel(
     @Query('mes', ParseIntPipe) mes: number,
@@ -29,5 +30,26 @@ export class prestarContaController {
     @Res() res: Response,
   ) {
     return this.service.gerarExcel(mes, ano, user, res);
+  }
+
+  */
+
+  @Get('excel')
+  async gerarExcel(
+    @Query('mes', ParseIntPipe) mes: number,
+    @Query('ano', ParseIntPipe) ano: number,
+    @Query('regularOuAtrasado') regularOuAtrasado: string, // 👈 Novo parâmetro
+    @User() user: LoginPayload, // ✅ Aqui
+    @Res() res: Response,
+  ) {
+    console.log(
+      'mes:',
+      mes,
+      'ano:',
+      ano,
+      'regularOuAtrasado:',
+      regularOuAtrasado,
+    );
+    return this.service.gerarExcel(mes, ano, regularOuAtrasado, user, res);
   }
 }

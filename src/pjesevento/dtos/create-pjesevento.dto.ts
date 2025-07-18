@@ -18,6 +18,9 @@ export class CreatePjesEventoDto {
   @IsNumber()
   ttCtPrcEvento: number;
 
+  @IsString()
+  regularOuAtrasado: string;
+
   @IsNumber()
   userId: number;
 

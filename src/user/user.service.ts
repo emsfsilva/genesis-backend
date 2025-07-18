@@ -30,12 +30,26 @@ export class UserService {
 
     @InjectRepository(OmeEntity)
     private readonly omeRepository: Repository<OmeEntity>,
-  ) { }
+  ) {}
+
+  // Validador : somente usuários com tipo Master ou Auxiliar possam executar
+  // Validador está em: createUser, updateUser, deleteUser, e resetPassword
+  private ensureIsMasterOrAuxiliar(loggedUser: LoginPayload) {
+    if (
+      loggedUser.typeUser !== UserType.Master &&
+      loggedUser.typeUser !== UserType.Auxiliar
+    ) {
+      throw new BadRequestException(
+        'Você não tem permissão para executar esta ação.',
+      );
+    }
+  }
 
   async createUser(
     createUserDto: CreateUserDto,
     loggedUser: LoginPayload,
   ): Promise<UserEntity> {
+    this.ensureIsMasterOrAuxiliar(loggedUser);
     /* VERIFICA SE O LOGIN SEI JA EXISTE */
     const user = await this.findUserByLoginSei(createUserDto.loginSei).catch(
       () => undefined,
@@ -76,17 +90,17 @@ export class UserService {
 
     // Define o tipo com base no pg
     const pg = createUserDto.pg.trim();
-    const pracas = ['Al Cfsd', 'Sd', 'Cb', '3º Sgt', '2º Sgt', '1º Sgt', 'St'];
+    const pracas = ['AL CFSD', 'SD', 'CB', '3º SGT', '2º SGT', '1º SGT', 'ST'];
     const oficiais = [
-      'Al Cfoa',
-      'Al Cfo',
-      'Asp',
-      '2º Ten',
-      '1º Ten',
-      'Cap',
-      'Maj',
-      'Tc',
-      'Cel',
+      'AL CFOA',
+      'AL CFO',
+      'ASP',
+      '2º TEN',
+      '1º TEN',
+      'CAP',
+      'MAJ',
+      'TC',
+      'CEL',
     ];
 
     let tipo: string | undefined = undefined;
@@ -99,6 +113,7 @@ export class UserService {
 
     const newUser = await this.userRepository.save({
       ...createUserDto,
+      email: `${createUserDto.loginSei}@pm.pe.gov.br`, // <- força o padrão aqui
       password: passwordHashed,
       tipo,
     });
@@ -129,11 +144,25 @@ export class UserService {
       await this.masterRepository.save(master);
     }
 
-    return newUser;
+    const userWithRelations = await this.userRepository.findOne({
+      where: { id: newUser.id },
+      relations: ['ome', 'ome.diretoria', 'addresses', 'master', 'auxiliar'],
+    });
+
+    return userWithRelations;
   }
 
   async getAllUser(): Promise<UserEntity[]> {
-    return this.userRepository.find();
+    return this.userRepository.find({
+      relations: {
+        ome: {
+          diretoria: true,
+        },
+      },
+      order: {
+        nomeGuerra: 'ASC', // ordenação alfabética (A → Z)
+      },
+    });
   }
 
   async findUserById(userId: number): Promise<UserEntity> {
@@ -178,9 +207,9 @@ export class UserService {
     data: Partial<CreateUserDto>,
     loggedUser: LoginPayload,
   ): Promise<UserEntity> {
+    this.ensureIsMasterOrAuxiliar(loggedUser);
     const user = await this.findUserById(userId);
 
-    // Restrição para Auxiliar
     if (loggedUser.typeUser === UserType.Auxiliar) {
       const isTipoValido =
         user.typeUser === UserType.Comum || user.typeUser === UserType.Auxiliar;
@@ -198,6 +227,10 @@ export class UserService {
       }
     }
 
+    if (data.loginSei) {
+      data.email = `${data.loginSei}@pm.pe.gov.br`;
+    }
+
     if (data.mat) {
       const existingMat = await this.userRepository.findOne({
         where: { mat: data.mat },
@@ -210,28 +243,27 @@ export class UserService {
       }
     }
 
-    // Atualiza tipo baseado no pg, se fornecido
     if (data.pg) {
       const pg = data.pg.trim();
       const pracas = [
-        'Al Cfsd',
-        'Sd',
-        'Cb',
-        '3º Sgt',
-        '2º Sgt',
-        '1º Sgt',
-        'St',
+        'AL CFSD',
+        'SD',
+        'CB',
+        '3º SGT',
+        '2º SGT',
+        '1º SGT',
+        'ST',
       ];
       const oficiais = [
-        'Al Cfoa',
-        'Al Cfo',
-        'Asp',
-        '2º Ten',
-        '1º Ten',
-        'Cap',
-        'Maj',
-        'Tc',
-        'Cel',
+        'AL CFOA',
+        'AL CFO',
+        'ASP',
+        '2º TEN',
+        '1º TEN',
+        'CAP',
+        'MAJ',
+        'TC',
+        'CEL',
       ];
 
       if (pracas.includes(pg)) data.tipo = 'P';
@@ -252,13 +284,22 @@ export class UserService {
 
     if (data.omeId) {
       user.omeId = data.omeId;
-      user.ome = undefined;
+      user.ome = undefined; // limpa referência antiga
     }
 
-    return this.userRepository.save(user);
+    await this.userRepository.save(user);
+
+    // ⚠️ Aqui recarrega o usuário com a OME
+    const updatedUser = await this.userRepository.findOne({
+      where: { id: user.id },
+      relations: ['ome', 'ome.diretoria', 'addresses', 'master', 'auxiliar'], // adicione outros se quiser
+    });
+
+    return updatedUser;
   }
 
   async deleteUser(userId: number, loggedUser: LoginPayload): Promise<void> {
+    this.ensureIsMasterOrAuxiliar(loggedUser);
     const user = await this.findUserById(userId);
 
     if (loggedUser.typeUser === UserType.Auxiliar) {
